@@ -104,7 +104,7 @@ namespace
                 writability = SettingConstraintWritability::CONST;
                 return true;
             }
-            else if (ParserKeyword{Keyword::WRITABLE}.ignore(pos, expected))
+            if (ParserKeyword{Keyword::WRITABLE}.ignore(pos, expected))
             {
                 writability = SettingConstraintWritability::WRITABLE;
                 return true;

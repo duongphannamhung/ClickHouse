@@ -24,7 +24,7 @@ constexpr DB::TokenType determineClosingPair(const DB::TokenType token_type)
 {
     if (token_type == DB::TokenType::OpeningCurlyBrace)
         return DB::TokenType::ClosingCurlyBrace;
-    else if (token_type == DB::TokenType::OpeningRoundBracket)
+    if (token_type == DB::TokenType::OpeningRoundBracket)
         return DB::TokenType::ClosingRoundBracket;
     else if (token_type == DB::TokenType::OpeningSquareBracket)
         return DB::TokenType::ClosingSquareBracket;

@@ -130,20 +130,12 @@ protected:
         {
             if (is_file)
                 return std::map<String, FileDataPtr>::find(path);
-            else
-                return std::map<String, FileDataPtr>::find(path.ends_with("/") ? path : path + '/');
-        }
-
-        auto add(const String & path, FileDataPtr data)
-        {
-            if (data->type == FileType::Directory)
-                return emplace(path.ends_with("/") ? path : path + '/', data);
-            else
-                return emplace(path, data);
-        }
-    };
-
-    mutable Files files;
+            return std::map<String, FileDataPtr>::find(path.ends_with("/") ? path : path + '/') auto add(
+                const String & path, FileDataPtr data)
+            {
+                if (data->type == FileType::Directory)
+                    return emplace(path.ends_with("/") ? path : path + '/', data);
+            return emplace(path,                 return emplace(path, data)s;
     mutable std::shared_mutex metadata_mutex;
 
     FileDataPtr tryGetFileInfo(const String & path) const;

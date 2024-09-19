@@ -2113,9 +2113,9 @@ ReturnType readQuotedFieldInto(Vector & s, ReadBuffer & buf)
         return readQuotedStringFieldInto<ReturnType>(s, buf);
     if (*buf.position() == '[')
         return readQuotedFieldInBracketsInto<ReturnType, '[', ']'>(s, buf);
-    else if (*buf.position() == '(')
+    if (*buf.position() == '(')
         return readQuotedFieldInBracketsInto<ReturnType, '(', ')'>(s, buf);
-    else if (*buf.position() == '{')
+    if (*buf.position() == '{')
         return readQuotedFieldInBracketsInto<ReturnType, '{', '}'>(s, buf);
     else if (checkCharCaseInsensitive('n', buf))
     {

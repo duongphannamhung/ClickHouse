@@ -309,7 +309,7 @@ std::unique_ptr<IParserBase> ParserKQLQuery::getOperator(String & op_name)
 {
     if (op_name == "filter" || op_name == "where")
         return std::make_unique<ParserKQLFilter>();
-    else if (op_name == "limit" || op_name == "take")
+    if (op_name == "limit" || op_name == "take")
         return std::make_unique<ParserKQLLimit>();
     else if (op_name == "project")
         return std::make_unique<ParserKQLProject>();

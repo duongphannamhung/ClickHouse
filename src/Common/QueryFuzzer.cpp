@@ -764,19 +764,19 @@ ASTExplainQuery::ExplainKind QueryFuzzer::fuzzExplainKind(ASTExplainQuery::Expla
     {
         return ASTExplainQuery::ExplainKind::ParsedAST;
     }
-    else if (fuzz_rand() % 11 == 0)
+    if (fuzz_rand() % 11 == 0)
     {
         return ASTExplainQuery::ExplainKind::AnalyzedSyntax;
     }
-    else if (fuzz_rand() % 11 == 0)
+    if (fuzz_rand() % 11 == 0)
     {
         return ASTExplainQuery::ExplainKind::QueryTree;
     }
-    else if (fuzz_rand() % 11 == 0)
+    if (fuzz_rand() % 11 == 0)
     {
         return ASTExplainQuery::ExplainKind::QueryPlan;
     }
-    else if (fuzz_rand() % 11 == 0)
+    if (fuzz_rand() % 11 == 0)
     {
         return ASTExplainQuery::ExplainKind::QueryPipeline;
     }
@@ -1287,7 +1287,7 @@ void QueryFuzzer::addTableLike(ASTPtr ast)
     if (table_like_map.size() > AST_FUZZER_PART_TYPE_CAP)
     {
         const auto iter = std::next(table_like.begin(), fuzz_rand() % table_like.size());
-        const auto ast_del = *iter;
+        const auto & ast_del = *iter;
         table_like.erase(iter);
         table_like_map.erase(ast_del.first);
     }
@@ -1308,7 +1308,7 @@ void QueryFuzzer::addColumnLike(ASTPtr ast)
     if (column_like_map.size() > AST_FUZZER_PART_TYPE_CAP)
     {
         const auto iter = std::next(column_like.begin(), fuzz_rand() % column_like.size());
-        const auto ast_del = *iter;
+        const auto & ast_del = *iter;
         column_like.erase(iter);
         column_like_map.erase(ast_del.first);
     }

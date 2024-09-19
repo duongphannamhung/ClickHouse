@@ -35,9 +35,9 @@ void ASTSelectWithUnionQuery::formatQueryImpl(const FormatSettings & settings, F
     {
         if (mode == SelectUnionMode::UNION_DEFAULT)
             return "UNION";
-        else if (mode == SelectUnionMode::UNION_ALL)
+        if (mode == SelectUnionMode::UNION_ALL)
             return "UNION ALL";
-        else if (mode == SelectUnionMode::UNION_DISTINCT)
+        if (mode == SelectUnionMode::UNION_DISTINCT)
             return "UNION DISTINCT";
         else if (mode == SelectUnionMode::EXCEPT_DEFAULT)
             return "EXCEPT";

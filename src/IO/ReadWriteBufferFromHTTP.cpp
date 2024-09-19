@@ -434,7 +434,7 @@ std::unique_ptr<ReadBuffer> ReadWriteBufferFromHTTP::initialize()
                 toString(response.getStatus()),
                 response.getReason());
         }
-        else if (read_range.end)
+        if (read_range.end)
         {
             /// We could have range.begin == 0 and range.end != 0 in case of DiskWeb and failing to read with partial content
             /// will affect only performance, so a warning is enough.

@@ -17,6 +17,10 @@ Checks: [
 
   '-android-*',
 
+  '-clang-analyzer-deadcode.DeadStores',  # TODO undo
+  '-clang-diagnostic-unused-but-set-variable',  # TODO undo
+  '-readability-static-accessed-through-instance',  # TODO undo
+
   '-bugprone-assignment-in-if-condition',
   '-bugprone-branch-clone',
   '-bugprone-easily-swappable-parameters',
@@ -30,6 +34,7 @@ Checks: [
   '-bugprone-unchecked-optional-access',
   '-bugprone-crtp-constructor-accessibility',
   '-bugprone-suspicious-stringview-data-usage',
+  '-bugprone-return-const-ref-from-parameter',
 
   '-cert-dcl16-c',
   '-cert-dcl37-c',
@@ -91,6 +96,7 @@ Checks: [
   '-misc-non-private-member-variables-in-classes',
   '-misc-confusable-identifiers', # useful but slooo
   '-misc-use-anonymous-namespace',
+  '-misc-use-internal-linkage',
 
   '-modernize-avoid-c-arrays',
   '-modernize-concat-nested-namespaces',
@@ -104,6 +110,9 @@ Checks: [
   '-modernize-use-nodiscard',
   '-modernize-use-trailing-return-type',
   '-modernize-use-designated-initializers',
+  '-modernize-use-ranges',
+
+  '-boost-use-ranges',
 
   '-performance-enum-size',
   '-performance-inefficient-string-concatenation',
@@ -137,6 +146,7 @@ Checks: [
   '-readability-suspicious-call-argument',
   '-readability-uppercase-literal-suffix',
   '-readability-use-anyofallof',
+  '-readability-math-missing-parentheses',
 
   '-zircon-*'
 ]

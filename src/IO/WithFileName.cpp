@@ -20,10 +20,9 @@ String getFileNameFromReadBuffer(const ReadBuffer & in)
         return getFileNameFromReadBuffer(wrapper->getWrappedReadBuffer());
     if (const auto * parallel = dynamic_cast<const ParallelReadBuffer *>(&in))
         return getFileNameFromReadBuffer(parallel->getReadBuffer());
-    else if (const auto * peekable = dynamic_cast<const PeekableReadBuffer *>(&in))
+    if (const auto * peekable = dynamic_cast<const PeekableReadBuffer *>(&in))
         return getFileNameFromReadBuffer(peekable->getSubBuffer());
-    else
-        return getFileName(in);
+    return getFileName(in);
 }
 
 String getExceptionEntryWithFileName(const ReadBuffer & in)

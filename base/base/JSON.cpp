@@ -682,8 +682,7 @@ double JSON::toDouble() const
         return getDouble();
     if (type == TYPE_STRING)
         return JSON(ptr_begin + 1, ptr_end, level + 1).getDouble();
-    else
-        throw JSONException("JSON: cannot convert value to double.");
+    throw JSONException("JSON: cannot convert value to double.");
 }
 
 Int64 JSON::toInt() const
@@ -694,8 +693,7 @@ Int64 JSON::toInt() const
         return getInt();
     if (type == TYPE_STRING)
         return JSON(ptr_begin + 1, ptr_end, level + 1).getInt();
-    else
-        throw JSONException("JSON: cannot convert value to signed integer.");
+    throw JSONException("JSON: cannot convert value to signed integer.");
 }
 
 UInt64 JSON::toUInt() const
@@ -706,8 +704,7 @@ UInt64 JSON::toUInt() const
         return getUInt();
     if (type == TYPE_STRING)
         return JSON(ptr_begin + 1, ptr_end, level + 1).getUInt();
-    else
-        throw JSONException("JSON: cannot convert value to unsigned integer.");
+    throw JSONException("JSON: cannot convert value to unsigned integer.");
 }
 
 std::string JSON::toString() const

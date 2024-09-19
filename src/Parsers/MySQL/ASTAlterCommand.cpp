@@ -377,7 +377,7 @@ bool ParserAlterCommand::parseImpl(IParser::Pos & pos, ASTPtr & node, Expected &
 
     if (k_add.ignore(pos, expected))
         return parseAddCommand(pos, node, expected);
-    else if (k_drop.ignore(pos, expected))
+    if (k_drop.ignore(pos, expected))
         return parseDropCommand(pos, node, expected);
     else if (k_alter.ignore(pos, expected))
         return parseAlterCommand(pos, node, expected);

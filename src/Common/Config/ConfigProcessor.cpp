@@ -635,7 +635,7 @@ XMLDocumentPtr ConfigProcessor::parseConfig(const std::string & config_path)
 
     if (extension == ".xml")
         return dom_parser.parse(config_path);
-    else if (extension == ".yaml" || extension == ".yml")
+    if (extension == ".yaml" || extension == ".yml")
         return YAMLParser::parse(config_path);
     else
     {

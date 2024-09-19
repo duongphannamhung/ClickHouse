@@ -187,7 +187,7 @@ ReturnType parseDateTimeBestEffortImpl(
                 readDecimalNumber<10>(res, digits);
                 return ReturnType(true);
             }
-            else if (num_digits == 9 && !year && !has_time)
+            if (num_digits == 9 && !year && !has_time)
             {
                 if (strict)
                     return on_error(ErrorCodes::CANNOT_PARSE_DATETIME, "Strict best effort parsing doesn't allow timestamps");
@@ -590,7 +590,7 @@ ReturnType parseDateTimeBestEffortImpl(
                 {
                     return on_error(ErrorCodes::CANNOT_PARSE_DATETIME, "Cannot read DateTime: unexpected alphabetical character");
                 }
-                else if (num_alpha == 2)
+                if (num_alpha == 2)
                 {
                     if (alpha[1] == 'M' || alpha[1] == 'm')
                     {
@@ -707,7 +707,7 @@ ReturnType parseDateTimeBestEffortImpl(
             return true;
         if (month_ == 2 && ((is_leap_year_ && day_ >= 1 && day_ <= 29) || (!is_leap_year_ && day_ >= 1 && day_ <= 28)))
             return true;
-        else if ((month_ == 4 || month_ == 6 || month_ == 9 || month_ == 11) && day_ >= 1 && day_ <= 30)
+        if ((month_ == 4 || month_ == 6 || month_ == 9 || month_ == 11) && day_ >= 1 && day_ <= 30)
             return true;
         return false;
     };

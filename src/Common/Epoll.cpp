@@ -83,8 +83,7 @@ size_t Epoll::getManyReady(int max_events, epoll_event * events_out, int timeout
             }
             throw ErrnoException(ErrorCodes::EPOLL_ERROR, "Error in epoll_wait");
         }
-        else
-            break;
+        break;
     }
 
     return ready_size;

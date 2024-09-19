@@ -55,10 +55,8 @@ namespace
             {
                 return right.hasProperty(right_key) && (left.getRawString(left_key) == right.getRawString(right_key));
             }
-            else
-            {
-                return !right.hasProperty(right_key);
-            }
+
+            return !right.hasProperty(right_key);
         }
         else
         {

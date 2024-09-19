@@ -56,10 +56,9 @@ std::streampos StdStreamBufFromReadBuffer::seekoff(std::streamoff off, std::ios_
         return seekpos(off, which);
     if (dir == std::ios_base::cur)
         return seekpos(getCurrentPosition() + off, which);
-    else if (dir == std::ios_base::end)
+    if (dir == std::ios_base::end)
         return seekpos(size + off, which);
-    else
-        throw Exception(ErrorCodes::LOGICAL_ERROR, "Wrong seek's base {}", static_cast<int>(dir));
+    throw Exception(ErrorCodes::LOGICAL_ERROR, "Wrong seek's base {}", static_cast<int>(dir));
 }
 
 std::streampos StdStreamBufFromReadBuffer::seekpos(std::streampos pos, std::ios_base::openmode which)

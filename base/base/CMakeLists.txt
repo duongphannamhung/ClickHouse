@@ -1,7 +1,7 @@
 add_compile_options("$<$<OR:$<COMPILE_LANGUAGE:C>,$<COMPILE_LANGUAGE:CXX>>:${COVERAGE_FLAGS}>")
 
 if (USE_CLANG_TIDY)
-    set (CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_PATH}")
+    set (CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_PATH};-fix;-format-style=file")
 endif ()
 
 # TODO: Remove this. We like to compile with C++23 (set by top-level CMakeLists) but Clang crashes with our libcxx

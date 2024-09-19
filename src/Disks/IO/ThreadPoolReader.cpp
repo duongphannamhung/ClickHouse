@@ -164,7 +164,7 @@ std::future<IAsynchronousReader::Result> ThreadPoolReader::submit(Request reques
                     has_pread_nowait_support.store(false, std::memory_order_relaxed);
                     break;
                 }
-                else if (errno == EAGAIN)
+                if (errno == EAGAIN)
                 {
                     /// Data is not available in page cache. Will hand off to thread pool.
                     break;

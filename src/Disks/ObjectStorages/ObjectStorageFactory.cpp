@@ -76,7 +76,7 @@ ObjectStoragePtr createObjectStorage(
 {
     if (isPlainStorage(type, config, config_prefix))
         return std::make_shared<PlainObjectStorage<BaseObjectStorage>>(std::forward<Args>(args)...);
-    else if (isPlainRewritableStorage(type, config, config_prefix))
+    if (isPlainRewritableStorage(type, config, config_prefix))
     {
         /// HDFS object storage currently does not support iteration and does not implement listObjects method.
         /// StaticWeb object storage is read-only and works with its dedicated metadata type.

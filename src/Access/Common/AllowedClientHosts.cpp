@@ -61,7 +61,7 @@ namespace
         {
             if (addr.family() == IPAddress::Family::IPv4 && addr_v6 == toIPv6(addr))
                 return true;
-            else if (addr.family() == IPAddress::Family::IPv6 && addr_v6 == addr)
+            if (addr.family() == IPAddress::Family::IPv6 && addr_v6 == addr)
                 return true;
         }
 
@@ -267,7 +267,7 @@ String AllowedClientHosts::IPSubnet::toString() const
     unsigned int prefix_length = mask.prefixLength();
     if (isMaskAllBitsOne())
         return prefix.toString();
-    else if (IPAddress{prefix_length, mask.family()} == mask)
+    if (IPAddress{prefix_length, mask.family()} == mask)
         return fs::path(prefix.toString()) / std::to_string(prefix_length);
     else
         return fs::path(prefix.toString()) / mask.toString();
@@ -575,7 +575,7 @@ bool AllowedClientHosts::contains(const IPAddress & client_address) const
         parseLikePattern(pattern, subnet, name, name_regexp);
         if (subnet)
             return check_subnet(*subnet);
-        else if (name)
+        if (name)
             return check_name(*name);
         else if (name_regexp)
             return check_name_regexp(*name_regexp);

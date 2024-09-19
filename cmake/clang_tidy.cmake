@@ -12,7 +12,9 @@ if (ENABLE_CLANG_TIDY)
         # The CLANG_TIDY_PATH is passed to CMAKE_CXX_CLANG_TIDY, which follows CXX_CLANG_TIDY syntax.
         set (CLANG_TIDY_PATH "${CLANG_TIDY_CACHE_PATH};${_CLANG_TIDY_PATH}" CACHE STRING "A combined command to run clang-tidy with caching wrapper")
     else ()
-        find_program (CLANG_TIDY_PATH NAMES "clang-tidy-18" "clang-tidy-17" "clang-tidy-16" "clang-tidy")
+        if (NOT CLANG_TIDY_PATH)
+            find_program (CLANG_TIDY_PATH NAMES "clang-tidy-18" "clang-tidy-17" "clang-tidy-16" "clang-tidy")
+        endif ()
     endif ()
 
     if (CLANG_TIDY_PATH)

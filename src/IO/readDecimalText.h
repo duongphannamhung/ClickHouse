@@ -90,14 +90,15 @@ inline bool readDigits(ReadBuffer & buf, T & x, uint32_t & digits, int32_t & exp
                         /// Simply cut excessive digits.
                         break;
                     }
-                    else
-                    {
-                        if constexpr (_throw_on_error)
-                            throw Exception(ErrorCodes::ARGUMENT_OUT_OF_BOUND, "Too many digits ({} > {}) in decimal value",
-                                std::to_string(digits + places), std::to_string(max_digits));
 
-                        return false;
-                    }
+                    if constexpr (_throw_on_error)
+                        throw Exception(
+                            ErrorCodes::ARGUMENT_OUT_OF_BOUND,
+                            "Too many digits ({} > {}) in decimal value",
+                            std::to_string(digits + places),
+                            std::to_string(max_digits));
+
+                    return false;
                 }
                 else
                 {
@@ -186,15 +187,13 @@ inline ReturnType readDecimalText(ReadBuffer & buf, T & x, uint32_t precision, u
             scale = 0;
             return ReturnType(true);
         }
-        else
-        {
-            /// Too many digits after point. Just cut off excessive digits.
-            auto divisor = intExp10OfSize<typename T::NativeType>(divisor_exp);
-            assert(divisor > 0); /// This is for Clang Static Analyzer. It is not smart enough to infer it automatically.
-            x.value /= divisor;
-            scale = 0;
-            return ReturnType(true);
-        }
+
+        /// Too many digits after point. Just cut off excessive digits.
+        auto divisor = intExp10OfSize<typename T::NativeType>(divisor_exp);
+        assert(divisor > 0); /// This is for Clang Static Analyzer. It is not smart enough to infer it automatically.
+        x.value /= divisor;
+        scale = 0;
+        return ReturnType(true);
     }
 
     scale += exponent;

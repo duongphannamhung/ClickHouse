@@ -202,7 +202,7 @@ inline DataTypePtr createDecimal(UInt64 precision_value, UInt64 scale_value)
         return std::make_shared<DecimalType<Decimal32>>(precision_value, scale_value);
     if (precision_value <= DecimalUtils::max_precision<Decimal64>)
         return std::make_shared<DecimalType<Decimal64>>(precision_value, scale_value);
-    else if (precision_value <= DecimalUtils::max_precision<Decimal128>)
+    if (precision_value <= DecimalUtils::max_precision<Decimal128>)
         return std::make_shared<DecimalType<Decimal128>>(precision_value, scale_value);
     return std::make_shared<DecimalType<Decimal256>>(precision_value, scale_value);
 }

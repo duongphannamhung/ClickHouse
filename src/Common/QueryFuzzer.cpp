@@ -760,7 +760,7 @@ ASTExplainQuery::ExplainKind QueryFuzzer::fuzzExplainKind(ASTExplainQuery::Expla
     {
         return kind;
     }
-    else if (fuzz_rand() % 11 == 0)
+    if (fuzz_rand() % 11 == 0)
     {
         return ASTExplainQuery::ExplainKind::ParsedAST;
     }

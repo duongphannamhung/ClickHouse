@@ -167,98 +167,95 @@ ReturnType readFloatTextPreciseImpl(T & x, ReadBuffer & buf)
 
         return ReturnType(true);
     }
-    else
+
+    /// Slow path. Copy characters that may be present in floating point number to temporary buffer.
+    bool negative = false;
+
+    /// We check eof here because we can parse +inf +nan
+    while (!buf.eof())
     {
-        /// Slow path. Copy characters that may be present in floating point number to temporary buffer.
-        bool negative = false;
-
-        /// We check eof here because we can parse +inf +nan
-        while (!buf.eof())
+        switch (*buf.position())
         {
-            switch (*buf.position())
-            {
-                case '+':
-                    ++buf.position();
-                    continue;
+            case '+':
+                ++buf.position();
+                continue;
 
-                case '-':
-                {
-                    negative = true;
-                    ++buf.position();
-                    continue;
-                }
-
-                case 'i': [[fallthrough]];
-                case 'I':
-                {
-                    if (assertOrParseInfinity<throw_exception>(buf))
-                    {
-                        x = std::numeric_limits<T>::infinity();
-                        if (negative)
-                            x = -x;
-                        return ReturnType(true);
-                    }
-                    return ReturnType(false);
-                }
-
-                case 'n': [[fallthrough]];
-                case 'N':
-                {
-                    if (assertOrParseNaN<throw_exception>(buf))
-                    {
-                        x = std::numeric_limits<T>::quiet_NaN();
-                        if (negative)
-                            x = -x;
-                        return ReturnType(true);
-                    }
-                    return ReturnType(false);
-                }
-
-                default:
-                    break;
+            case '-': {
+                negative = true;
+                ++buf.position();
+                continue;
             }
 
-            break;
-        }
-
-
-        char tmp_buf[MAX_LENGTH];
-        int num_copied_chars = 0;
-
-        while (!buf.eof() && num_copied_chars < MAX_LENGTH)
-        {
-            char c = *buf.position();
-            if (!(isNumericASCII(c) || c == '-' || c == '+' || c == '.' || c == 'e' || c == 'E'))
-                break;
-
-            tmp_buf[num_copied_chars] = c;
-            ++buf.position();
-            ++num_copied_chars;
-        }
-
-        fast_float::from_chars_result res;
-        if constexpr (std::endian::native == std::endian::little)
-            res = fast_float::from_chars(tmp_buf, tmp_buf + num_copied_chars, x);
-        else
-        {
-            Float64 x64 = 0.0;
-            res = fast_float::from_chars(tmp_buf, tmp_buf + num_copied_chars, x64);
-            x = static_cast<T>(x64);
-        }
-        if (unlikely(res.ec != std::errc() || res.ptr - tmp_buf != num_copied_chars))
-        {
-            if constexpr (throw_exception)
-                throw Exception(
-                    ErrorCodes::CANNOT_PARSE_NUMBER, "Cannot read floating point value here: {}", String(tmp_buf, num_copied_chars));
-            else
+            case 'i':
+                [[fallthrough]];
+            case 'I': {
+                if (assertOrParseInfinity<throw_exception>(buf))
+                {
+                    x = std::numeric_limits<T>::infinity();
+                    if (negative)
+                        x = -x;
+                    return ReturnType(true);
+                }
                 return ReturnType(false);
+            }
+
+            case 'n':
+                [[fallthrough]];
+            case 'N': {
+                if (assertOrParseNaN<throw_exception>(buf))
+                {
+                    x = std::numeric_limits<T>::quiet_NaN();
+                    if (negative)
+                        x = -x;
+                    return ReturnType(true);
+                }
+                return ReturnType(false);
+            }
+
+            default:
+                break;
         }
 
-        if (negative)
-            x = -x;
-
-        return ReturnType(true);
+        break;
     }
+
+
+    char tmp_buf[MAX_LENGTH];
+    int num_copied_chars = 0;
+
+    while (!buf.eof() && num_copied_chars < MAX_LENGTH)
+    {
+        char c = *buf.position();
+        if (!(isNumericASCII(c) || c == '-' || c == '+' || c == '.' || c == 'e' || c == 'E'))
+            break;
+
+        tmp_buf[num_copied_chars] = c;
+        ++buf.position();
+        ++num_copied_chars;
+    }
+
+    fast_float::from_chars_result res;
+    if constexpr (std::endian::native == std::endian::little)
+        res = fast_float::from_chars(tmp_buf, tmp_buf + num_copied_chars, x);
+    else
+    {
+        Float64 x64 = 0.0;
+        res = fast_float::from_chars(tmp_buf, tmp_buf + num_copied_chars, x64);
+        x = static_cast<T>(x64);
+    }
+    if (unlikely(res.ec != std::errc() || res.ptr - tmp_buf != num_copied_chars))
+    {
+        if constexpr (throw_exception)
+            throw Exception(
+                ErrorCodes::CANNOT_PARSE_NUMBER, "Cannot read floating point value here: {}", String(tmp_buf, num_copied_chars));
+        else
+            return ReturnType(false);
+    }
+
+    if (negative)
+        x = -x;
+
+    return ReturnType(true);
 }
 
 
@@ -479,7 +476,7 @@ ReturnType readFloatTextFastImpl(T & x, ReadBuffer & in, bool & has_fractional)
             }
             return ReturnType(false);
         }
-        else if (*in.position() == 'n' || *in.position() == 'N')
+        if (*in.position() == 'n' || *in.position() == 'N')
         {
             if (assertOrParseNaN<throw_exception>(in))
             {

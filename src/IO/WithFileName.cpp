@@ -18,7 +18,7 @@ String getFileNameFromReadBuffer(const ReadBuffer & in)
 {
     if (const auto * wrapper = dynamic_cast<const ReadBufferWrapperBase *>(&in))
         return getFileNameFromReadBuffer(wrapper->getWrappedReadBuffer());
-    else if (const auto * parallel = dynamic_cast<const ParallelReadBuffer *>(&in))
+    if (const auto * parallel = dynamic_cast<const ParallelReadBuffer *>(&in))
         return getFileNameFromReadBuffer(parallel->getReadBuffer());
     else if (const auto * peekable = dynamic_cast<const PeekableReadBuffer *>(&in))
         return getFileNameFromReadBuffer(peekable->getSubBuffer());

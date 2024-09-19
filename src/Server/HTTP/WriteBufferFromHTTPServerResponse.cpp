@@ -13,7 +13,14 @@ namespace DB
 
 void WriteBufferFromHTTPServerResponse::startSendHeaders()
 {
-    if (!headers_started_sending)
+    if (headers_started_sending)
+        return;
+
+    headers_started_sending = true;
+
+    if (response.getChunkedTransferEncoding())
+        setChunked();
+    else if (response.getContentLength() == Poco::Net::HTTPMessage::UNKNOWN_CONTENT_LENGTH)
     {
         headers_started_sending = true;
 
@@ -35,6 +42,16 @@ void WriteBufferFromHTTPServerResponse::startSendHeaders()
         auto header_str = header.str();
         socketSendBytes(header_str.data(), header_str.size());
     }
+
+    if (add_cors_header)
+        response.set("Access-Control-Allow-Origin", "*");
+
+    setResponseDefaultHeaders(response);
+
+    std::stringstream header; //STYLE_CHECK_ALLOW_STD_STRING_STREAM
+    response.beginWrite(header);
+    auto header_str = header.str();
+    socketSendBytes(header_str.data(), header_str.size());
 }
 
 void WriteBufferFromHTTPServerResponse::writeHeaderProgressImpl(const char * header_name)

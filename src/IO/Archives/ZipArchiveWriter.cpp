@@ -345,7 +345,7 @@ int ZipArchiveWriter::compressionMethodToInt(const String & compression_method_)
 {
     if (compression_method_.empty())
         return MZ_COMPRESS_METHOD_DEFLATE; /// By default the compression method is "deflate".
-    else if (compression_method_ == kStore)
+    if (compression_method_ == kStore)
         return MZ_COMPRESS_METHOD_STORE;
     else if (compression_method_ == kDeflate)
         return MZ_COMPRESS_METHOD_DEFLATE;

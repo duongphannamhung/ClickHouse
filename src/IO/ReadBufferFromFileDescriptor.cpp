@@ -185,53 +185,45 @@ off_t ReadBufferFromFileDescriptor::seek(off_t offset, int whence)
 
         return new_pos;
     }
-    else
+
+    /// Position is out of the buffer, we need to do real seek.
+    off_t seek_pos = required_alignment > 1 ? new_pos / required_alignment * required_alignment : new_pos;
+
+    off_t offset_after_seek_pos = new_pos - seek_pos;
+
+    /// First reset the buffer so the next read will fetch new data to the buffer.
+    resetWorkingBuffer();
+
+    /// In case of using 'pread' we just update the info about the next position in file.
+    /// In case of using 'read' we call 'lseek'.
+
+    /// We account both cases as seek event as it leads to non-contiguous reads from file.
+    ProfileEvents::increment(ProfileEvents::Seek);
+
+    if (!use_pread)
     {
-        /// Position is out of the buffer, we need to do real seek.
-        off_t seek_pos = required_alignment > 1
-            ? new_pos / required_alignment * required_alignment
-            : new_pos;
+        Stopwatch watch(profile_callback ? clock_type : CLOCK_MONOTONIC);
 
-        off_t offset_after_seek_pos = new_pos - seek_pos;
+        off_t res = ::lseek(fd, seek_pos, SEEK_SET);
+        if (-1 == res)
+            ErrnoException::throwFromPath(
+                ErrorCodes::CANNOT_SEEK_THROUGH_FILE, getFileName(), "Cannot seek through file {} at offset {}", getFileName(), seek_pos);
 
-        /// First reset the buffer so the next read will fetch new data to the buffer.
-        resetWorkingBuffer();
+        /// Also note that seeking past the file size is not allowed.
+        if (res != seek_pos)
+            throw Exception(
+                ErrorCodes::CANNOT_SEEK_THROUGH_FILE, "The 'lseek' syscall returned value ({}) that is not expected ({})", res, seek_pos);
 
-        /// In case of using 'pread' we just update the info about the next position in file.
-        /// In case of using 'read' we call 'lseek'.
-
-        /// We account both cases as seek event as it leads to non-contiguous reads from file.
-        ProfileEvents::increment(ProfileEvents::Seek);
-
-        if (!use_pread)
-        {
-            Stopwatch watch(profile_callback ? clock_type : CLOCK_MONOTONIC);
-
-            off_t res = ::lseek(fd, seek_pos, SEEK_SET);
-            if (-1 == res)
-                ErrnoException::throwFromPath(
-                    ErrorCodes::CANNOT_SEEK_THROUGH_FILE,
-                    getFileName(),
-                    "Cannot seek through file {} at offset {}",
-                    getFileName(),
-                    seek_pos);
-
-            /// Also note that seeking past the file size is not allowed.
-            if (res != seek_pos)
-                throw Exception(ErrorCodes::CANNOT_SEEK_THROUGH_FILE,
-                    "The 'lseek' syscall returned value ({}) that is not expected ({})", res, seek_pos);
-
-            watch.stop();
-            ProfileEvents::increment(ProfileEvents::DiskReadElapsedMicroseconds, watch.elapsedMicroseconds());
-        }
-
-        file_offset_of_buffer_end = seek_pos;
-
-        if (offset_after_seek_pos > 0)
-            ignore(offset_after_seek_pos);
-
-        return seek_pos;
+        watch.stop();
+        ProfileEvents::increment(ProfileEvents::DiskReadElapsedMicroseconds, watch.elapsedMicroseconds());
     }
+
+    file_offset_of_buffer_end = seek_pos;
+
+    if (offset_after_seek_pos > 0)
+        ignore(offset_after_seek_pos);
+
+    return seek_pos;
 }
 
 

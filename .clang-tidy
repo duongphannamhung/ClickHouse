@@ -6,6 +6,7 @@
 # b) too noisy (checks with > 100 new warnings are considered noisy, this includes e.g. cppcoreguidelines-*).
 
 HeaderFilterRegex: '^.*/(base|src|programs|utils)/.*(h|hpp)$'
+ExcludeHeaderFilterRegex: '^.*/contrib/.*\.(h|hpp)$'
 
 Checks: [
   '*',
@@ -116,7 +117,6 @@ Checks: [
   '-readability-avoid-unconditional-preprocessor-if',
   '-readability-braces-around-statements',
   '-readability-convert-member-functions-to-static',
-  '-readability-else-after-return',
   '-readability-function-cognitive-complexity',
   '-readability-function-size',
   '-readability-identifier-length',

@@ -426,13 +426,13 @@ std::unique_ptr<ReadBuffer> ReadWriteBufferFromHTTP::initialize()
                     reason,
                     "");
             }
-            else
-                throw Exception(
-                    ErrorCodes::HTTP_RANGE_NOT_SATISFIABLE,
-                    "Cannot read with range: [{}, {}] (response status: {}, reason: {})",
-                    *read_range.begin,
-                    read_range.end ? toString(*read_range.end) : "-",
-                    toString(response.getStatus()), response.getReason());
+            throw Exception(
+                ErrorCodes::HTTP_RANGE_NOT_SATISFIABLE,
+                "Cannot read with range: [{}, {}] (response status: {}, reason: {})",
+                *read_range.begin,
+                read_range.end ? toString(*read_range.end) : "-",
+                toString(response.getStatus()),
+                response.getReason());
         }
         else if (read_range.end)
         {

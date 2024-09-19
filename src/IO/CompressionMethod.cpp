@@ -60,7 +60,7 @@ CompressionMethod chooseHTTPCompressionMethod(const std::string & list)
 
     if (std::string::npos != list.find("zstd"))
         return CompressionMethod::Zstd;
-    else if (std::string::npos != list.find("br"))
+    if (std::string::npos != list.find("br"))
         return CompressionMethod::Brotli;
     else if (std::string::npos != list.find("lz4"))
         return CompressionMethod::Lz4;

@@ -176,7 +176,7 @@ std::shared_ptr<ProxyConfigurationResolver> ProxyConfigurationResolverProvider::
     {
         return getRemoteResolver(request_protocol, prefix, configuration);
     }
-    else if (hasListResolver(prefix, configuration))
+    if (hasListResolver(prefix, configuration))
     {
         return getListResolver(request_protocol, prefix, configuration);
     }

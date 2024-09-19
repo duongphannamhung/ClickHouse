@@ -226,7 +226,7 @@ Algorithm parseAlgorithmFromString(const String & str)
 {
     if (boost::iequals(str, "aes_128_ctr"))
         return Algorithm::AES_128_CTR;
-    else if (boost::iequals(str, "aes_192_ctr"))
+    if (boost::iequals(str, "aes_192_ctr"))
         return Algorithm::AES_192_CTR;
     else if (boost::iequals(str, "aes_256_ctr"))
         return Algorithm::AES_256_CTR;

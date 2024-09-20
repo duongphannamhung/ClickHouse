@@ -854,7 +854,6 @@ StorageKafka2::PolledBatchInfo StorageKafka2::pollConsumer(
             consumer.currentPartition(),
             consumer.currentOffset());
         throw std::move(e);
-       
     };
 
     StreamingFormatExecutor executor(non_virtual_header, input_format, std::move(on_error));

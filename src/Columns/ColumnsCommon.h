@@ -124,9 +124,7 @@ ColumnPtr selectIndexImpl(const Column & column, const IColumn & indexes, size_t
     else if (const auto * data_uint64 = detail::getIndexesData<UInt64>(indexes))
         return column.template indexImpl<UInt64>(*data_uint64, limit);
     else
-        throw Exception(ErrorCodes::LOGICAL_ERROR, "Indexes column for IColumn::select must be ColumnUInt, got {}", indexes.getName())
-            size_t
-            getLimitForPermutation(size_t column_size, size_t perm_size, size_t limit);
+        throw Exception(ErrorCodes::LOGICAL_ERROR, "Indexes column for IColumn::select must be ColumnUInt, got {}", indexes.getName());
 
     template <typename Column>
     ColumnPtr permuteImpl(const Column & column, const IColumn::Permutation & perm, size_t limit)

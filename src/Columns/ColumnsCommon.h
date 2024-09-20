@@ -121,16 +121,19 @@ ColumnPtr selectIndexImpl(const Column & column, const IColumn & indexes, size_t
         return column.template indexImpl<UInt16>(*data_uint16, limit);
     if (const auto * data_uint32 = detail::getIndexesData<UInt32>(indexes))
         return column.template indexImpl<UInt32>(*data_uint32, limit);
-    else if (const auto * data_uint64 = detail::getIndexesData<UInt64>(indexes))
+    if (const auto * data_uint64 = detail::getIndexesData<UInt64>(indexes))
         return column.template indexImpl<UInt64>(*data_uint64, limit);
-    else
-        throw Exception(ErrorCodes::LOGICAL_ERROR, "Indexes column for IColumn::select must be ColumnUInt, got {}", indexes.getName());
 
-    template <typename Column>
-    ColumnPtr permuteImpl(const Column & column, const IColumn::Permutation & perm, size_t limit)
-    {
-        limit = getLimitForPermutation(column.size(), perm.size(), limit);
-        return column.indexImpl(perm, limit);
+    throw Exception(ErrorCodes::LOGICAL_ERROR, "Indexes column for IColumn::select must be ColumnUInt, got {}", indexes.getName());
+}
+
+size_t getLimitForPermutation(size_t column_size, size_t perm_size, size_t limit);
+
+template <typename Column>
+ColumnPtr permuteImpl(const Column & column, const IColumn::Permutation & perm, size_t limit)
+{
+    limit = getLimitForPermutation(column.size(), perm.size(), limit);
+    return column.indexImpl(perm, limit);
 }
 
 /// NOLINTNEXTLINE

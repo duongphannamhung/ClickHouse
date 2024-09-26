@@ -121,4 +121,11 @@ void FilterStep::updateOutputStream()
     }
 }
 
+
+bool FilterStep::canUseType(const DataTypePtr & filter_type)
+{
+    return FilterTransform::canUseType(filter_type);
+}
+
+
 }

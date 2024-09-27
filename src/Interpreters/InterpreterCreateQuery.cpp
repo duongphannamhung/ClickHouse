@@ -1508,7 +1508,7 @@ BlockIO InterpreterCreateQuery::createTable(ASTCreateQuery & create)
     {
         if (!getContext()->getSettingsRef()[Setting::allow_experimental_refreshable_materialized_view])
             throw Exception(ErrorCodes::SUPPORT_IS_DISABLED,
-                "Refreshable materialized views are experimental. Enable allow_experimental_refreshable_materialized_view to use.");
+                "Refreshable materialized views are experimental. Enable allow_experimental_refreshable_materialized_view to use");
 
         AddDefaultDatabaseVisitor visitor(getContext(), current_database);
         visitor.visit(*create.refresh_strategy);
@@ -1588,7 +1588,8 @@ BlockIO InterpreterCreateQuery::createTable(ASTCreateQuery & create)
     if (need_add_to_database && !database)
         throw Exception(ErrorCodes::UNKNOWN_DATABASE, "Database {} does not exist", backQuoteIfNeed(database_name));
 
-    if (create.replace_table)
+    if (create.replace_table
+        || (create.replace_view && (database->getEngineName() == "Atomic" || database->getEngineName() == "Replicated")))
     {
         chassert(!ddl_guard);
         return doCreateOrReplaceTable(create, properties, mode);
@@ -1661,6 +1662,9 @@ bool InterpreterCreateQuery::doCreateTable(ASTCreateQuery & create,
             drop_ast->no_ddl_lock = true;
 
             auto drop_context = Context::createCopy(context);
+            /// Don't check dependencies during DROP of the view, because we will recreate
+            /// it with the same name and all dependencies will remain valid.
+            drop_context->setSetting("check_table_dependencies", false);
             InterpreterDropQuery interpreter(drop_ast, drop_context);
             interpreter.execute();
         }
@@ -1941,16 +1945,16 @@ BlockIO InterpreterCreateQuery::doCreateOrReplaceTable(ASTCreateQuery & create,
 
         auto ast_rename = std::make_shared<ASTRenameQuery>(ASTRenameQuery::Elements{std::move(elem)});
         ast_rename->dictionary = create.is_dictionary;
-        if (create.create_or_replace)
+        if (create.create_or_replace || create.replace_view)
         {
-            /// CREATE OR REPLACE TABLE
+            /// CREATE OR REPLACE TABLE/VIEW
             /// Will execute ordinary RENAME instead of EXCHANGE if the target table does not exist
             ast_rename->rename_if_cannot_exchange = true;
             ast_rename->exchange = false;
         }
         else
         {
-            /// REPLACE TABLE
+            /// REPLACE TABLE/VIEW
             /// Will execute EXCHANGE query and fail if the target table does not exist
             ast_rename->exchange = true;
         }

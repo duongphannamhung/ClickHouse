@@ -2,16 +2,16 @@
 
 #if defined(OS_LINUX) && defined(__amd64__) && defined(__SSE2__) && !defined(SANITIZER) && defined(NDEBUG)
 
-#    include <cstring>
-#    include <unistd.h>
-#    include <sys/mman.h>
-#    include <sys/syscall.h>
+#include <cstring>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <sys/syscall.h>
 
-#    include <emmintrin.h>
+#include <emmintrin.h>
 
-#    include <Common/getMappedArea.h>
-#    include <Common/Exception.h>
-#    include <fmt/format.h>
+#include <Common/getMappedArea.h>
+#include <Common/Exception.h>
+#include <fmt/format.h>
 
 
 namespace DB

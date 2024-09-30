@@ -699,7 +699,6 @@ PlannerActionsVisitorImpl::NodeNameAndNodeMinLevel PlannerActionsVisitorImpl::vi
             return action_node_name_helper.calculateActionNodeName(constant_node.getSourceExpression());
         }
         return calculateConstantActionNodeName(constant_literal, constant_type);
-       
     }();
 
     ColumnWithTypeAndName column;

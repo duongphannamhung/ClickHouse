@@ -300,7 +300,6 @@ void updateImpl(const ColumnArray * column_array, const ColumnArray::Offsets & c
         ProfileEvents::increment(ProfileEvents::USearchAddCount);
         ProfileEvents::increment(ProfileEvents::USearchAddVisitedMembers, result.visited_members);
         ProfileEvents::increment(ProfileEvents::USearchAddComputedDistances, result.computed_distances);
-       
     };
 
     size_t index_size = index->size();

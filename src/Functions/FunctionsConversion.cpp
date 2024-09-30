@@ -3553,7 +3553,6 @@ private:
                         ErrorCodes::LOGICAL_ERROR,
                         "Illegal column {} for function CAST AS AggregateFunction",
                         argument_column.column->getName());
-                   
                 };
             }
         }
@@ -3633,7 +3632,6 @@ private:
             }
 
             throw Exception(ErrorCodes::LOGICAL_ERROR, "Illegal column {} for function CAST AS Array", argument_column.column->getName());
-           
         };
     }
 
@@ -4364,7 +4362,6 @@ private:
             auto discriminators = ColumnVariant::ColumnDiscriminators::create();
             discriminators->getData().resize_fill(column->size(), variant_discr);
             return createVariantFromDescriptorsAndOneNonEmptyVariant(variant_types, std::move(discriminators), column, variant_discr);
-           
         };
     }
 

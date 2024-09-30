@@ -226,7 +226,6 @@ void ReadFromRemote::addLazyPipe(Pipes & pipes, const ClusterProxy::SelectStream
         QueryPipelineBuilder builder;
         builder.init(std::move(pipe));
         return builder;
-       
     };
 
     pipes.emplace_back(createDelayedPipe(shard.header, lazily_create_stream, add_totals, add_extremes));

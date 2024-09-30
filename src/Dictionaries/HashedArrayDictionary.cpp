@@ -1201,7 +1201,6 @@ void registerDictionaryArrayHashed(DictionaryFactory & factory)
                 dict_id, dict_struct, std::move(source_ptr), configuration);
         return std::make_unique<HashedArrayDictionary<DictionaryKeyType::Complex, false>>(
             dict_id, dict_struct, std::move(source_ptr), configuration);
-       
     };
 
     factory.registerLayout("hashed_array",

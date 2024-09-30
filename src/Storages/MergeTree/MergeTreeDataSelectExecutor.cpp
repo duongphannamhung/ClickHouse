@@ -1181,7 +1181,6 @@ MarkRanges MergeTreeDataSelectExecutor::markRangesFromPKRange(
 
             return part_offset_condition->checkInRange(
                 2, part_offset_left.data(), part_offset_right.data(), part_offset_types, initial_mask);
-           
         };
 
         if (key_condition_useful && part_offset_condition_useful)

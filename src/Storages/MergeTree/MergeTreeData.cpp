@@ -1058,7 +1058,6 @@ void MergeTreeData::MergingParams::check(const StorageInMemoryMetadata & metadat
         if (miss_is_deleted_column)
             throw Exception(
                 ErrorCodes::NO_SUCH_COLUMN_IN_TABLE, "is_deleted column {} does not exist in table declaration.", is_deleted_column);
-       
     };
 
 

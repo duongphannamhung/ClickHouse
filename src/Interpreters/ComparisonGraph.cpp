@@ -233,7 +233,6 @@ ComparisonGraph<Node>::ComparisonGraph(const NodeContainer & atomic_formulas, Co
             nodes_graph.vertices.push_back(EqualComponent{{node}, std::nullopt});
             nodes_graph.edges.emplace_back();
             return nodes_graph.vertices.size() - 1;
-           
         };
 
         const auto * function_node = tryGetFunctionNode(atom);

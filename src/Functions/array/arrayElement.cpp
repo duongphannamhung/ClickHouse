@@ -1368,8 +1368,8 @@ ColumnPtr FunctionArrayElement<mode>::executeArrayString(
 
     if (col_nullable)
         return ColumnArray::create(ColumnNullable::create(std::move(res_string), std::move(res_string_null_map)), std::move(res_offsets));
-
-    return ColumnArray::create(std::move(res_string), std::move(res_offsets));
+    else
+        return ColumnArray::create(std::move(res_string), std::move(res_offsets));
 }
 
 template <ArrayElementExceptionMode mode>

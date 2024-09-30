@@ -72,7 +72,7 @@ void HDFSBuilderWrapper::loadFromConfig(
 #    endif // USE_KRB5
             continue;
         }
-        else if (key == "hadoop_security_kerberos_ticket_cache_path")
+        if (key == "hadoop_security_kerberos_ticket_cache_path")
         {
 #    if USE_KRB5
             if (isUser)

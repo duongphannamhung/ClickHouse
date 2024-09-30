@@ -2117,7 +2117,7 @@ ReturnType readQuotedFieldInto(Vector & s, ReadBuffer & buf)
         return readQuotedFieldInBracketsInto<ReturnType, '(', ')'>(s, buf);
     if (*buf.position() == '{')
         return readQuotedFieldInBracketsInto<ReturnType, '{', '}'>(s, buf);
-    else if (checkCharCaseInsensitive('n', buf))
+    if (checkCharCaseInsensitive('n', buf))
     {
         /// NULL or NaN
         if (checkCharCaseInsensitive('u', buf))

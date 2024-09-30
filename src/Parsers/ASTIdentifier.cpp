@@ -224,8 +224,7 @@ ASTPtr ASTTableIdentifier::getTable() const
             return std::make_shared<ASTIdentifier>("", children[0]->clone());
         return std::make_shared<ASTIdentifier>(name_parts[0]);
     }
-    else
-        return {};
+    return {};
 }
 
 ASTPtr ASTTableIdentifier::getDatabase() const

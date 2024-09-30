@@ -142,9 +142,7 @@ AggregateFunctionFactory::getAssociatedFunctionByNullsAction(const String & name
             throw Exception(ErrorCodes::NOT_IMPLEMENTED, "Function {} does not support RESPECT NULLS", name);
         if (auto associated_it = aggregate_functions.find(it->second); associated_it != aggregate_functions.end())
             return {associated_it->second};
-        else
-            throw Exception(
-                ErrorCodes::LOGICAL_ERROR, "Unable to find the function {} (equivalent to '{} RESPECT NULLS')", it->second, name);
+        throw Exception(ErrorCodes::LOGICAL_ERROR, "Unable to find the function {} (equivalent to '{} RESPECT NULLS')", it->second, name);
     }
 
     if (action == NullsAction::IGNORE_NULLS)

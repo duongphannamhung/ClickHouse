@@ -428,8 +428,7 @@ void ZooKeeper::createIfNotExists(const std::string & path, const std::string & 
         return;
     if (code == Coordination::Error::ZNOTREADONLY && exists(path))
         return;
-    else
-        throw KeeperException::fromPath(code, path);
+    throw KeeperException::fromPath(code, path);
 }
 
 void ZooKeeper::createAncestors(const std::string & path)

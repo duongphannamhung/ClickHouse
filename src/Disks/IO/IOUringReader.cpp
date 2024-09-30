@@ -126,12 +126,10 @@ std::future<IAsynchronousReader::Result> IOUringReader::submit(Request request)
         return makeFailedResult(
             Exception(ErrorCodes::IO_URING_SUBMIT_ERROR, "Failed submitting SQE: {}", ret < 0 ? errnoToString(-ret) : "no SQE submitted"));
     }
-    else
-    {
-        CurrentMetrics::add(CurrentMetrics::IOUringPendingEvents);
-        pending_requests.push_back(std::move(enqueued_request));
-        return pending_requests.back().promise.get_future();
-    }
+
+    CurrentMetrics::add(CurrentMetrics::IOUringPendingEvents);
+    pending_requests.push_back(std::move(enqueued_request));
+    return pending_requests.back().promise.get_future();
 }
 
 int IOUringReader::submitToRing(EnqueuedRequest & enqueued)

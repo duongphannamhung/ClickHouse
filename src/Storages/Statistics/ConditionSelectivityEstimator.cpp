@@ -103,20 +103,18 @@ Float64 ConditionSelectivityEstimator::estimateRowCount(const RPNBuilderTreeNode
     {
         if (op == "equals")
             return default_cond_equal_factor * total_rows;
-        else if (op == "less" || op == "lessOrEquals" || op == "greater" || op == "greaterOrEquals")
+        if (op == "less" || op == "lessOrEquals" || op == "greater" || op == "greaterOrEquals")
             return default_cond_range_factor * total_rows;
-        else
-            return default_unknown_cond_factor * total_rows;
+        return default_unknown_cond_factor * total_rows;
     }
 
     if (op == "equals")
         return estimator.estimateEqual(val, total_rows);
-    else if (op == "less" || op == "lessOrEquals")
+    if (op == "less" || op == "lessOrEquals")
         return estimator.estimateLess(val, total_rows);
-    else if (op == "greater" || op == "greaterOrEquals")
+    if (op == "greater" || op == "greaterOrEquals")
         return estimator.estimateGreater(val, total_rows);
-    else
-        return default_unknown_cond_factor * total_rows;
+    return default_unknown_cond_factor * total_rows;
 }
 
 void ConditionSelectivityEstimator::incrementRowCount(UInt64 rows)

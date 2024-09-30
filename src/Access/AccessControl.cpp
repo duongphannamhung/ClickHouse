@@ -132,8 +132,7 @@ public:
                             "' registered for user-defined settings",
                             String{setting_name}, boost::algorithm::join(registered_prefixes, "' or '"));
         }
-        else
-            BaseSettingsHelpers::throwSettingNotFound(setting_name);
+        BaseSettingsHelpers::throwSettingNotFound(setting_name);
     }
 
 private:
@@ -828,8 +827,7 @@ std::shared_ptr<const EnabledQuota> AccessControl::getAuthenticationQuota(
                                             quota_key,
                                             throw_if_client_key_empty);
     }
-    else
-        return nullptr;
+    return nullptr;
 }
 
 

@@ -237,18 +237,16 @@ WriteSpec getDeltaWriteSpec(const T & value)
     {
         return WriteSpec{3, 0b110, 9};
     }
-    else if (value > -2047 && value < 2048)
+    if (value > -2047 && value < 2048)
     {
         return WriteSpec{4, 0b1110, 12};
     }
-    else if (value > std::numeric_limits<Int32>::min() && value < std::numeric_limits<Int32>::max())
+    if (value > std::numeric_limits<Int32>::min() && value < std::numeric_limits<Int32>::max())
     {
         return WriteSpec{5, 0b11110, 32};
     }
-    else
-    {
-        return WriteSpec{5, 0b11111, 64};
-    }
+
+    return WriteSpec{5, 0b11111, 64};
 }
 
 WriteSpec getDeltaMaxWriteSpecByteSize(UInt8 data_bytes_size)

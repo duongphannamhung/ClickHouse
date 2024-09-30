@@ -96,8 +96,7 @@ CompressionCodecPtr CompressionCodecFactory::get(
             return codecs.back();
         if (codecs.size() > 1)
             return std::make_shared<CompressionCodecMultiple>(codecs);
-        else
-            return std::make_shared<CompressionCodecNone>();
+        return std::make_shared<CompressionCodecNone>();
     }
 
     throw Exception(ErrorCodes::UNEXPECTED_AST_STRUCTURE, "Unexpected AST structure for compression codec: {}", queryToString(ast));

@@ -100,19 +100,17 @@ inline bool readDigits(ReadBuffer & buf, T & x, uint32_t & digits, int32_t & exp
 
                     return false;
                 }
-                else
-                {
-                    digits += places;
-                    if (after_point)
-                        exponent -= places;
 
-                    // TODO: accurate shift10 for big integers
-                    x *= intExp10OfSize<typename T::NativeType>(places);
-                    places = 0;
+                digits += places;
+                if (after_point)
+                    exponent -= places;
 
-                    x += (byte - '0');
-                    break;
-                }
+                // TODO: accurate shift10 for big integers
+                x *= intExp10OfSize<typename T::NativeType>(places);
+                places = 0;
+
+                x += (byte - '0');
+                break;
             }
             case 'e': [[fallthrough]];
             case 'E':

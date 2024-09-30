@@ -138,7 +138,7 @@ public:
     {
         if (other.count == 0)
             return;
-        else if (count == 0)
+        if (count == 0)
         {
             compress_threshold = other.compress_threshold;
             relative_error = other.relative_error;
@@ -149,94 +149,92 @@ public:
             memcpy(sampled.data(), other.sampled.data(), sizeof(Stats) * other.sampled.size());
             return;
         }
-        else
+
+        // Merge the two buffers.
+        // The GK algorithm is a bit unclear about it, but we need to adjust the statistics during the
+        // merging. The main idea is that samples that come from one side will suffer from the lack of
+        // precision of the other.
+        // As a concrete example, take two QuantileSummaries whose samples (value, g, delta) are:
+        // `a = [(0, 1, 0), (20, 99, 0)]` and `b = [(10, 1, 0), (30, 49, 0)]`
+        // This means `a` has 100 values, whose minimum is 0 and maximum is 20,
+        // while `b` has 50 values, between 10 and 30.
+        // The resulting samples of the merge will be:
+        // a+b = [(0, 1, 0), (10, 1, ??), (20, 99, ??), (30, 49, 0)]
+        // The values of `g` do not change, as they represent the minimum number of values between two
+        // consecutive samples. The values of `delta` should be adjusted, however.
+        // Take the case of the sample `10` from `b`. In the original stream, it could have appeared
+        // right after `0` (as expressed by `g=1`) or right before `20`, so `delta=99+0-1=98`.
+        // In the GK algorithm's style of working in terms of maximum bounds, one can observe that the
+        // maximum additional uncertainty over samples coming from `b` is `max(g_a + delta_a) =
+        // floor(2 * eps_a * n_a)`. Likewise, additional uncertainty over samples from `a` is
+        // `floor(2 * eps_b * n_b)`.
+        // Only samples that interleave the other side are affected. That means that samples from
+        // one side that are lesser (or greater) than all samples from the other side are just copied
+        // unmodified.
+        // If the merging instances have different `relativeError`, the resulting instance will carry
+        // the largest one: `eps_ab = max(eps_a, eps_b)`.
+        // The main invariant of the GK algorithm is kept:
+        // `max(g_ab + delta_ab) <= floor(2 * eps_ab * (n_a + n_b))` since
+        // `max(g_ab + delta_ab) <= floor(2 * eps_a * n_a) + floor(2 * eps_b * n_b)`
+        // Finally, one can see how the `insert(x)` operation can be expressed as `merge([(x, 1, 0])`
+        compress();
+
+        backup_sampled.clear();
+        backup_sampled.reserve_exact(sampled.size() + other.sampled.size());
+        double merged_relative_error = std::max(relative_error, other.relative_error);
+        size_t merged_count = count + other.count;
+        Int64 additional_self_delta = static_cast<Int64>(std::floor(2 * other.relative_error * other.count));
+        Int64 additional_other_delta = static_cast<Int64>(std::floor(2 * relative_error * count));
+
+        // Do a merge of two sorted lists until one of the lists is fully consumed
+        size_t self_idx = 0;
+        size_t other_idx = 0;
+        while (self_idx < sampled.size() && other_idx < other.sampled.size())
         {
-            // Merge the two buffers.
-            // The GK algorithm is a bit unclear about it, but we need to adjust the statistics during the
-            // merging. The main idea is that samples that come from one side will suffer from the lack of
-            // precision of the other.
-            // As a concrete example, take two QuantileSummaries whose samples (value, g, delta) are:
-            // `a = [(0, 1, 0), (20, 99, 0)]` and `b = [(10, 1, 0), (30, 49, 0)]`
-            // This means `a` has 100 values, whose minimum is 0 and maximum is 20,
-            // while `b` has 50 values, between 10 and 30.
-            // The resulting samples of the merge will be:
-            // a+b = [(0, 1, 0), (10, 1, ??), (20, 99, ??), (30, 49, 0)]
-            // The values of `g` do not change, as they represent the minimum number of values between two
-            // consecutive samples. The values of `delta` should be adjusted, however.
-            // Take the case of the sample `10` from `b`. In the original stream, it could have appeared
-            // right after `0` (as expressed by `g=1`) or right before `20`, so `delta=99+0-1=98`.
-            // In the GK algorithm's style of working in terms of maximum bounds, one can observe that the
-            // maximum additional uncertainty over samples coming from `b` is `max(g_a + delta_a) =
-            // floor(2 * eps_a * n_a)`. Likewise, additional uncertainty over samples from `a` is
-            // `floor(2 * eps_b * n_b)`.
-            // Only samples that interleave the other side are affected. That means that samples from
-            // one side that are lesser (or greater) than all samples from the other side are just copied
-            // unmodified.
-            // If the merging instances have different `relativeError`, the resulting instance will carry
-            // the largest one: `eps_ab = max(eps_a, eps_b)`.
-            // The main invariant of the GK algorithm is kept:
-            // `max(g_ab + delta_ab) <= floor(2 * eps_ab * (n_a + n_b))` since
-            // `max(g_ab + delta_ab) <= floor(2 * eps_a * n_a) + floor(2 * eps_b * n_b)`
-            // Finally, one can see how the `insert(x)` operation can be expressed as `merge([(x, 1, 0])`
-            compress();
+            const Stats & self_sample = sampled[self_idx];
+            const Stats & other_sample = other.sampled[other_idx];
 
-            backup_sampled.clear();
-            backup_sampled.reserve_exact(sampled.size() + other.sampled.size());
-            double merged_relative_error = std::max(relative_error, other.relative_error);
-            size_t merged_count = count + other.count;
-            Int64 additional_self_delta = static_cast<Int64>(std::floor(2 * other.relative_error * other.count));
-            Int64 additional_other_delta = static_cast<Int64>(std::floor(2 * relative_error * count));
-
-            // Do a merge of two sorted lists until one of the lists is fully consumed
-            size_t self_idx = 0;
-            size_t other_idx = 0;
-            while (self_idx < sampled.size() && other_idx < other.sampled.size())
+            // Detect next sample
+            Stats next_sample;
+            Int64 additional_delta = 0;
+            if (self_sample.value < other_sample.value)
             {
-                const Stats & self_sample = sampled[self_idx];
-                const Stats & other_sample = other.sampled[other_idx];
-
-                // Detect next sample
-                Stats next_sample;
-                Int64 additional_delta = 0;
-                if (self_sample.value < other_sample.value)
-                {
-                    ++self_idx;
-                    next_sample = self_sample;
-                    additional_delta = other_idx > 0 ? additional_self_delta : 0;
-                }
-                else
-                {
-                    ++other_idx;
-                    next_sample = other_sample;
-                    additional_delta = self_idx > 0 ? additional_other_delta : 0;
-                }
-
-                // Insert it
-                next_sample.delta += additional_delta;
-                backup_sampled.emplace_back(std::move(next_sample));
-            }
-
-            // Copy the remaining samples from the other list
-            // (by construction, at most one `while` loop will run)
-            while (self_idx < sampled.size())
-            {
-                backup_sampled.emplace_back(sampled[self_idx]);
                 ++self_idx;
+                next_sample = self_sample;
+                additional_delta = other_idx > 0 ? additional_self_delta : 0;
             }
-            while (other_idx < other.sampled.size())
+            else
             {
-                backup_sampled.emplace_back(other.sampled[other_idx]);
                 ++other_idx;
+                next_sample = other_sample;
+                additional_delta = self_idx > 0 ? additional_other_delta : 0;
             }
 
-            std::swap(sampled, backup_sampled);
-            relative_error = merged_relative_error;
-            count = merged_count;
-            compress_threshold = other.compress_threshold;
-
-            doCompress(2 * merged_relative_error * merged_count);
-            compressed = true;
+            // Insert it
+            next_sample.delta += additional_delta;
+            backup_sampled.emplace_back(std::move(next_sample));
         }
+
+        // Copy the remaining samples from the other list
+        // (by construction, at most one `while` loop will run)
+        while (self_idx < sampled.size())
+        {
+            backup_sampled.emplace_back(sampled[self_idx]);
+            ++self_idx;
+        }
+        while (other_idx < other.sampled.size())
+        {
+            backup_sampled.emplace_back(other.sampled[other_idx]);
+            ++other_idx;
+        }
+
+        std::swap(sampled, backup_sampled);
+        relative_error = merged_relative_error;
+        count = merged_count;
+        compress_threshold = other.compress_threshold;
+
+        doCompress(2 * merged_relative_error * merged_count);
+        compressed = true;
     }
 
     void write(WriteBuffer & buf) const
@@ -292,12 +290,10 @@ private:
             Int64 max_rank = min_rank + curr_sample.delta;
             if (max_rank - target_error <= rank && rank <= min_rank + target_error)
                 return {i, min_rank, curr_sample.value};
-            else
-            {
-                ++i;
-                curr_sample = sampled[i];
-                min_rank += curr_sample.g;
-            }
+
+            ++i;
+            curr_sample = sampled[i];
+            min_rank += curr_sample.g;
         }
         return {sampled.size() - 1, 0, sampled.back().value};
     }

@@ -688,12 +688,10 @@ void DDLWorker::processTask(DDLTaskBase & task, const ZooKeeperPtr & zookeeper)
             {
                 throw Exception(ErrorCodes::UNFINISHED, "Unexpected error: {}", task.execution_status.message);
             }
-            else
-            {
-                /// task.ops where not executed by table or database engine, so DDLWorker is responsible for
-                /// writing query execution status into ZooKeeper.
-                task.ops.emplace_back(zkutil::makeSetRequest(finished_node_path, task.execution_status.serializeText(), -1));
-            }
+
+            /// task.ops where not executed by table or database engine, so DDLWorker is responsible for
+            /// writing query execution status into ZooKeeper.
+            task.ops.emplace_back(zkutil::makeSetRequest(finished_node_path, task.execution_status.serializeText(), -1));
         }
 
         /// We need to distinguish ZK errors occurred before and after query executing
@@ -867,7 +865,7 @@ bool DDLWorker::tryExecuteQueryOnLeaderReplica(
                 executed_by_us = true;
                 break;
             }
-            else if (extra_attempt_for_replicated_database)
+            if (extra_attempt_for_replicated_database)
                 break;
         }
 
@@ -880,22 +878,19 @@ bool DDLWorker::tryExecuteQueryOnLeaderReplica(
                 task.ops.push_back(op);
             break;
         }
-        else
+
+        String tries_count;
+        zookeeper->tryGet(tries_to_execute_path, tries_count);
+        if (parse<int>(tries_count) > MAX_TRIES_TO_EXECUTE)
         {
-            String tries_count;
-            zookeeper->tryGet(tries_to_execute_path, tries_count);
-            if (parse<int>(tries_count) > MAX_TRIES_TO_EXECUTE)
-            {
-                /// Nobody will try to execute query again
-                LOG_WARNING(log, "Maximum retries count for task {} exceeded, cannot execute replicated DDL query", task.entry_name);
-                break;
-            }
-            else
-            {
-                /// Will try to wait or execute
-                LOG_TRACE(log, "Task {} still not executed, will try to wait for it or execute ourselves, tries count {}", task.entry_name, tries_count);
-            }
+            /// Nobody will try to execute query again
+            LOG_WARNING(log, "Maximum retries count for task {} exceeded, cannot execute replicated DDL query", task.entry_name);
+            break;
         }
+
+        /// Will try to wait or execute
+        LOG_TRACE(
+            log, "Task {} still not executed, will try to wait for it or execute ourselves, tries count {}", task.entry_name, tries_count);
     }
 
     chassert(!(executed_by_us && executed_by_other_leader));

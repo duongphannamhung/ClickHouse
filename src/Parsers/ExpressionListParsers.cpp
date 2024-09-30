@@ -2283,32 +2283,28 @@ std::unique_ptr<Layer> getFunctionLayer(ASTPtr identifier, bool is_table_functio
         return std::make_unique<ExtractLayer>();
     if (function_name_lowercase == "substring")
         return std::make_unique<SubstringLayer>();
-    else if (function_name_lowercase == "position")
+    if (function_name_lowercase == "position")
         return std::make_unique<PositionLayer>();
-    else if (function_name_lowercase == "exists")
+    if (function_name_lowercase == "exists")
         return std::make_unique<ExistsLayer>();
-    else if (function_name_lowercase == "trim")
+    if (function_name_lowercase == "trim")
         return std::make_unique<TrimLayer>(false, false);
-    else if (function_name_lowercase == "ltrim")
+    if (function_name_lowercase == "ltrim")
         return std::make_unique<TrimLayer>(true, false);
-    else if (function_name_lowercase == "rtrim")
+    if (function_name_lowercase == "rtrim")
         return std::make_unique<TrimLayer>(false, true);
-    else if (
-        function_name_lowercase == "dateadd" || function_name_lowercase == "date_add" || function_name_lowercase == "timestampadd"
+    if (function_name_lowercase == "dateadd" || function_name_lowercase == "date_add" || function_name_lowercase == "timestampadd"
         || function_name_lowercase == "timestamp_add")
         return std::make_unique<DateAddLayer>("plus");
-    else if (
-        function_name_lowercase == "datesub" || function_name_lowercase == "date_sub" || function_name_lowercase == "timestampsub"
+    if (function_name_lowercase == "datesub" || function_name_lowercase == "date_sub" || function_name_lowercase == "timestampsub"
         || function_name_lowercase == "timestamp_sub")
         return std::make_unique<DateAddLayer>("minus");
-    else if (
-        function_name_lowercase == "datediff" || function_name_lowercase == "date_diff" || function_name_lowercase == "timestampdiff"
+    if (function_name_lowercase == "datediff" || function_name_lowercase == "date_diff" || function_name_lowercase == "timestampdiff"
         || function_name_lowercase == "timestamp_diff")
         return std::make_unique<DateDiffLayer>();
-    else if (function_name_lowercase == "grouping")
+    if (function_name_lowercase == "grouping")
         return std::make_unique<FunctionLayer>(function_name_lowercase, allow_function_parameters_);
-    else
-        return std::make_unique<FunctionLayer>(function_name, allow_function_parameters_, identifier->as<ASTIdentifier>()->compound());
+    return std::make_unique<FunctionLayer>(function_name, allow_function_parameters_, identifier->as<ASTIdentifier>()->compound());
 }
 
 

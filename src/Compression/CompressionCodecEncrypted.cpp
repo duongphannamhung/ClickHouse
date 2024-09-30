@@ -31,8 +31,7 @@ EncryptionMethod toEncryptionMethod(const std::string & name)
         return AES_128_GCM_SIV;
     if (name == "AES_256_GCM_SIV")
         return AES_256_GCM_SIV;
-    else
-        throw Exception(ErrorCodes::BAD_ARGUMENTS, "Unknown encryption method. Got {}", name);
+    throw Exception(ErrorCodes::BAD_ARGUMENTS, "Unknown encryption method. Got {}", name);
 }
 
 namespace
@@ -45,8 +44,7 @@ String getMethodName(EncryptionMethod Method)
         return "AES_128_GCM_SIV";
     if (Method == AES_256_GCM_SIV)
         return "AES_256_GCM_SIV";
-    else
-        return "";
+    return "";
 }
 
 /// Get method code (used for codec, to understand which one we are using)
@@ -56,8 +54,7 @@ uint8_t getMethodCode(EncryptionMethod Method)
         return static_cast<uint8_t>(CompressionMethodByte::AES_128_GCM_SIV);
     if (Method == AES_256_GCM_SIV)
         return static_cast<uint8_t>(CompressionMethodByte::AES_256_GCM_SIV);
-    else
-        throw Exception(ErrorCodes::BAD_ARGUMENTS, "Unknown encryption method. Got {}", getMethodName(Method));
+    throw Exception(ErrorCodes::BAD_ARGUMENTS, "Unknown encryption method. Got {}", getMethodName(Method));
 }
 
 } // end of namespace
@@ -91,8 +88,7 @@ UInt64 methodKeySize(EncryptionMethod Method)
         return 16;
     if (Method == AES_256_GCM_SIV)
         return 32;
-    else
-        throw Exception(ErrorCodes::BAD_ARGUMENTS, "Unknown encryption method. Got {}", getMethodName(Method));
+    throw Exception(ErrorCodes::BAD_ARGUMENTS, "Unknown encryption method. Got {}", getMethodName(Method));
 }
 
 /// Get human-readable string representation of last error

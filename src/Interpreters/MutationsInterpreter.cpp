@@ -220,7 +220,7 @@ bool isStorageTouchedByMutations(
 
     if (!block.rows())
         return false;
-    else if (block.rows() != 1)
+    if (block.rows() != 1)
         throw Exception(ErrorCodes::LOGICAL_ERROR, "count() expression returned {} rows, not 1", block.rows());
 
     Block tmp_block;
@@ -258,8 +258,7 @@ ASTPtr getPartitionAndPredicateExpressionForMutationCommand(
 
     if (command.predicate && command.partition)
         return makeASTFunction("and", command.predicate->clone(), std::move(partition_predicate_as_ast_func));
-    else
-        return command.predicate ? command.predicate->clone() : partition_predicate_as_ast_func;
+    return command.predicate ? command.predicate->clone() : partition_predicate_as_ast_func;
 }
 
 

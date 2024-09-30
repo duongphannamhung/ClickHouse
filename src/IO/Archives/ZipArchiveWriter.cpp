@@ -351,14 +351,13 @@ int ZipArchiveWriter::compressionMethodToInt(const String & compression_method_)
         return MZ_COMPRESS_METHOD_DEFLATE;
     if (compression_method_ == kBzip2)
         return MZ_COMPRESS_METHOD_BZIP2;
-    else if (compression_method_ == kLzma)
+    if (compression_method_ == kLzma)
         return MZ_COMPRESS_METHOD_LZMA;
-    else if (compression_method_ == kZstd)
+    if (compression_method_ == kZstd)
         return MZ_COMPRESS_METHOD_ZSTD;
-    else if (compression_method_ == kXz)
+    if (compression_method_ == kXz)
         return MZ_COMPRESS_METHOD_XZ;
-    else
-        throw Exception(ErrorCodes::CANNOT_PACK_ARCHIVE, "Unknown compression method specified for a zip archive: {}", compression_method_);
+    throw Exception(ErrorCodes::CANNOT_PACK_ARCHIVE, "Unknown compression method specified for a zip archive: {}", compression_method_);
 }
 
 String ZipArchiveWriter::intToCompressionMethod(int compression_method_)

@@ -94,8 +94,7 @@ ObjectStoragePtr createObjectStorage(
         return std::make_shared<PlainRewritableObjectStorage<BaseObjectStorage>>(
             std::move(metadata_storage_metrics), std::forward<Args>(args)...);
     }
-    else
-        return std::make_shared<BaseObjectStorage>(std::forward<Args>(args)...);
+    return std::make_shared<BaseObjectStorage>(std::forward<Args>(args)...);
 }
 }
 

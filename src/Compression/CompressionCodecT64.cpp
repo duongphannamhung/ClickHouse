@@ -453,8 +453,7 @@ UInt32 getValuableBitsNumber(Int64 min, Int64 max)
             return getValuableBitsNumber(0ull, static_cast<UInt64>(max)) + 1;
         return getValuableBitsNumber(0ull, static_cast<UInt64>(~min)) + 1;
     }
-    else
-        return getValuableBitsNumber(static_cast<UInt64>(min), static_cast<UInt64>(max));
+    return getValuableBitsNumber(static_cast<UInt64>(min), static_cast<UInt64>(max));
 }
 
 

@@ -56,13 +56,14 @@ StorageID extractDependentTableFromSelectQuery(ASTSelectQuery & query, ContextPt
     {
         return StorageID(db_and_table->database, db_and_table->table/*, db_and_table->uuid*/);
     }
-    else if (auto subquery = extractTableExpression(query, 0))
+    if (auto subquery = extractTableExpression(query, 0))
     {
         auto * ast_select = subquery->as<ASTSelectWithUnionQuery>();
         if (!ast_select)
-            throw Exception(ErrorCodes::QUERY_IS_NOT_SUPPORTED_IN_MATERIALIZED_VIEW,
-                            "StorageMaterializedView cannot be created from table functions ({})",
-                            serializeAST(*subquery));
+            throw Exception(
+                ErrorCodes::QUERY_IS_NOT_SUPPORTED_IN_MATERIALIZED_VIEW,
+                "StorageMaterializedView cannot be created from table functions ({})",
+                serializeAST(*subquery));
         if (ast_select->list_of_selects->children.size() != 1)
             throw Exception(ErrorCodes::QUERY_IS_NOT_SUPPORTED_IN_MATERIALIZED_VIEW, "UNION is not supported for MATERIALIZED VIEW");
 
@@ -70,8 +71,7 @@ StorageID extractDependentTableFromSelectQuery(ASTSelectQuery & query, ContextPt
 
         return extractDependentTableFromSelectQuery(inner_query->as<ASTSelectQuery &>(), context, false);
     }
-    else
-        return StorageID::createEmpty();
+    return StorageID::createEmpty();
 }
 
 
@@ -109,8 +109,7 @@ static bool isSingleSelect(const ASTPtr & select, ASTPtr & res)
         res = new_inner_query;
         return true;
     }
-    else
-        return isSingleSelect(new_inner_query, res);
+    return isSingleSelect(new_inner_query, res);
 }
 
 SelectQueryDescription SelectQueryDescription::getSelectQueryFromASTForMatView(const ASTPtr & select, bool refreshable, ContextPtr context)

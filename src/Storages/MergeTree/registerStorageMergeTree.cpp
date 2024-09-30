@@ -67,10 +67,8 @@ static Names extractColumnNames(const ASTPtr & node)
 
         return res;
     }
-    else
-    {
-        return {getIdentifierName(node)};
-    }
+
+    return {getIdentifierName(node)};
 }
 
 constexpr auto verbose_help_message = R"(
@@ -232,10 +230,12 @@ static TableZnodeInfo extractZooKeeperPathAndReplicaNameFromEngineArgs(
                             "specify them explicitly, enable setting "
                             "database_replicated_allow_replicated_engine_arguments.");
         }
-        else if (!query.attach && is_replicated_database && local_context->getSettingsRef()[Setting::database_replicated_allow_replicated_engine_arguments] == 1)
+        if (!query.attach && is_replicated_database && local_context->getSettingsRef()[Setting::database_replicated_allow_replicated_engine_arguments] == 1)
         {
-            LOG_WARNING(&Poco::Logger::get("registerStorageMergeTree"), "It's not recommended to explicitly specify "
-                                                            "zookeeper_path and replica_name in ReplicatedMergeTree arguments");
+            LOG_WARNING(
+                &Poco::Logger::get("registerStorageMergeTree"),
+                "It's not recommended to explicitly specify "
+                "zookeeper_path and replica_name in ReplicatedMergeTree arguments");
         }
 
         /// Get path and name from engine arguments
@@ -466,11 +466,14 @@ static StoragePtr create(const StorageFactory::Arguments & args)
         if (is_extended_storage_def)
             throw Exception(ErrorCodes::NUMBER_OF_ARGUMENTS_DOESNT_MATCH, "With extended storage definition syntax storage {} requires {}{}",
                             args.engine_name, msg, verbose_help_message);
-        else
-            throw Exception(ErrorCodes::NUMBER_OF_ARGUMENTS_DOESNT_MATCH, "ORDER BY or PRIMARY KEY clause is missing. "
-                            "Consider using extended storage definition syntax with ORDER BY or PRIMARY KEY clause. "
-                            "With deprecated old syntax (highly not recommended) storage {} requires {}{}",
-                            args.engine_name, msg, verbose_help_message);
+        throw Exception(
+            ErrorCodes::NUMBER_OF_ARGUMENTS_DOESNT_MATCH,
+            "ORDER BY or PRIMARY KEY clause is missing. "
+            "Consider using extended storage definition syntax with ORDER BY or PRIMARY KEY clause. "
+            "With deprecated old syntax (highly not recommended) storage {} requires {}{}",
+            args.engine_name,
+            msg,
+            verbose_help_message);
     }
 
     if (is_extended_storage_def)
@@ -825,16 +828,15 @@ static StoragePtr create(const StorageFactory::Arguments & args)
             std::move(storage_settings),
             need_check_table_structure);
     }
-    else
-        return std::make_shared<StorageMergeTree>(
-            args.table_id,
-            args.relative_data_path,
-            metadata,
-            args.mode,
-            context,
-            date_column_name,
-            merging_params,
-            std::move(storage_settings));
+    return std::make_shared<StorageMergeTree>(
+        args.table_id,
+        args.relative_data_path,
+        metadata,
+        args.mode,
+        context,
+        date_column_name,
+        merging_params,
+        std::move(storage_settings));
 }
 
 

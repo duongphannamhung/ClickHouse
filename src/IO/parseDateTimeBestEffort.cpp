@@ -196,7 +196,7 @@ ReturnType parseDateTimeBestEffortImpl(
                 readDecimalNumber<9>(res, digits);
                 return ReturnType(true);
             }
-            else if (num_digits == 14 && !year && !has_time)
+            if (num_digits == 14 && !year && !has_time)
             {
                 if (strict)
                     return on_error(

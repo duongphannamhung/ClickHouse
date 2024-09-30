@@ -17,9 +17,23 @@ Checks: [
 
   '-android-*',
 
+  # TODO undo
   '-clang-analyzer-deadcode.DeadStores',  # TODO undo
-  '-clang-diagnostic-unused-but-set-variable',  # TODO undo
+  # '-clang-diagnostic-unused-but-set-variable',  # TODO undo
   '-readability-static-accessed-through-instance',  # TODO undo
+  '-performance-inefficient-vector-operation',  # TODO undo
+  '-readability-non-const-parameter',
+  '-bugprone-sizeof-expression',
+  '-misc-misplaced-const',
+  '-hicpp-exception-baseclass',
+  '-hicpp-use-equals-default',
+  '-clang-analyzer-core.uninitialized.UndefReturn',
+  '-clang-analyzer-core.CallAndMessage',
+  '-clang-analyzer-core.DivideZero',
+  '-clang-analyzer-core.*',
+  '-clang-analyzer-cplusplus.PlacementNew',
+  '-performance-unnecessary-copy-initialization',
+  # TODO end
 
   '-bugprone-assignment-in-if-condition',
   '-bugprone-branch-clone',

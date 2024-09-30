@@ -860,8 +860,7 @@ public:
     {
         if (dictionary_key_type == DictionaryKeyType::Simple)
             return "SSDCache";
-        else
-            return "SSDComplexKeyCache";
+        return "SSDComplexKeyCache";
     }
 
     bool supportsSimpleKeys() const override { return dictionary_key_type == DictionaryKeyType::Simple; }
@@ -1261,107 +1260,102 @@ private:
                 index[ssd_cache_key.key] = cell;
                 break;
             }
+
+            /// Partition memory write buffer if full flush it to disk and retry
+            size_t block_index_in_file_before_write = file_buffer.getCurrentBlockIndex();
+
+            if (started_reusing_old_partitions)
+            {
+                /// If we start reusing old partitions we need to remove old keys on disk from index before writing buffer
+                PaddedPODArray<KeyType> old_keys;
+                file_buffer.readKeys(block_index_in_file_before_write, configuration.write_buffer_blocks_size, old_keys);
+
+                size_t file_read_end_block_index = block_index_in_file_before_write + configuration.write_buffer_blocks_size;
+
+                for (auto old_key : old_keys)
+                {
+                    auto * it = index.find(old_key);
+
+                    if (it)
+                    {
+                        const Cell & old_key_cell = it->getMapped();
+
+                        size_t old_key_block = old_key_cell.index.block_index;
+
+                        /// Check if key in index is key from old partition blocks
+                        if (old_key_cell.isOnDisk() && old_key_block >= block_index_in_file_before_write
+                            && old_key_block < file_read_end_block_index)
+                            eraseKeyFromIndex(old_key);
+                    }
+                }
+            }
+
+            const char * partition_data = current_memory_buffer_partition.getData();
+
+            bool flush_to_file_result = file_buffer.writeBuffer(partition_data, configuration.write_buffer_blocks_size);
+
+            if (flush_to_file_result)
+            {
+                /// Update index cells keys offset and block index
+                PaddedPODArray<KeyType> keys_to_update;
+                current_memory_buffer_partition.readKeys(keys_to_update);
+
+                absl::flat_hash_set<KeyType, DefaultHash<KeyType>> updated_keys;
+
+                Int64 keys_to_update_size = static_cast<Int64>(keys_to_update.size());
+
+                /// Start from last to first because there can be multiple keys in same partition.
+                /// The valid key is the latest.
+                for (Int64 i = keys_to_update_size - 1; i >= 0; --i)
+                {
+                    auto key_to_update = keys_to_update[i];
+                    auto * it = index.find(key_to_update);
+
+                    /// If there are no key to update or key to update not in memory
+                    if (!it || it->getMapped().state != Cell::in_memory)
+                        continue;
+
+                    /// If there were duplicated keys in memory buffer partition
+                    if (updated_keys.contains(it->getKey()))
+                        continue;
+
+                    updated_keys.insert(key_to_update);
+
+                    Cell & cell_to_update = it->getMapped();
+
+                    cell_to_update.state = Cell::on_disk;
+                    cell_to_update.index.block_index += block_index_in_file_before_write;
+                }
+
+                /// Memory buffer partition flushed to disk start reusing it
+                current_memory_buffer_partition.reset();
+                memset(const_cast<char *>(current_memory_buffer_partition.getData()), 0, current_memory_buffer_partition.getSizeInBytes());
+
+                write_into_memory_buffer_result = current_memory_buffer_partition.writeKey(ssd_cache_key, cache_index);
+                assert(write_into_memory_buffer_result);
+
+                cell.state = Cell::in_memory;
+                cell.index = cache_index;
+                cell.in_memory_partition_index = current_partition_index;
+
+                index[ssd_cache_key.key] = cell;
+                break;
+            }
+
+            /// Partition is full need to try next partition
+
+            if (memory_buffer_partitions.size() < configuration.max_partitions_count)
+            {
+                /// Try tro create next partition without reusing old partitions
+                ++current_partition_index;
+                file_buffer.allocateSizeForNextPartition();
+                memory_buffer_partitions.emplace_back(configuration.block_size, configuration.write_buffer_blocks_size);
+            }
             else
             {
-                /// Partition memory write buffer if full flush it to disk and retry
-                size_t block_index_in_file_before_write = file_buffer.getCurrentBlockIndex();
-
-                if (started_reusing_old_partitions)
-                {
-                    /// If we start reusing old partitions we need to remove old keys on disk from index before writing buffer
-                    PaddedPODArray<KeyType> old_keys;
-                    file_buffer.readKeys(block_index_in_file_before_write, configuration.write_buffer_blocks_size, old_keys);
-
-                    size_t file_read_end_block_index = block_index_in_file_before_write + configuration.write_buffer_blocks_size;
-
-                    for (auto old_key : old_keys)
-                    {
-                        auto * it = index.find(old_key);
-
-                        if (it)
-                        {
-                            const Cell & old_key_cell = it->getMapped();
-
-                            size_t old_key_block = old_key_cell.index.block_index;
-
-                            /// Check if key in index is key from old partition blocks
-                            if (old_key_cell.isOnDisk() &&
-                                old_key_block >= block_index_in_file_before_write &&
-                                old_key_block < file_read_end_block_index)
-                                eraseKeyFromIndex(old_key);
-                        }
-                    }
-                }
-
-                const char * partition_data = current_memory_buffer_partition.getData();
-
-                bool flush_to_file_result = file_buffer.writeBuffer(partition_data, configuration.write_buffer_blocks_size);
-
-                if (flush_to_file_result)
-                {
-                    /// Update index cells keys offset and block index
-                    PaddedPODArray<KeyType> keys_to_update;
-                    current_memory_buffer_partition.readKeys(keys_to_update);
-
-                    absl::flat_hash_set<KeyType, DefaultHash<KeyType>> updated_keys;
-
-                    Int64 keys_to_update_size = static_cast<Int64>(keys_to_update.size());
-
-                    /// Start from last to first because there can be multiple keys in same partition.
-                    /// The valid key is the latest.
-                    for (Int64 i = keys_to_update_size - 1; i >= 0; --i)
-                    {
-                        auto key_to_update = keys_to_update[i];
-                        auto * it = index.find(key_to_update);
-
-                        /// If there are no key to update or key to update not in memory
-                        if (!it || it->getMapped().state != Cell::in_memory)
-                            continue;
-
-                        /// If there were duplicated keys in memory buffer partition
-                        if (updated_keys.contains(it->getKey()))
-                            continue;
-
-                        updated_keys.insert(key_to_update);
-
-                        Cell & cell_to_update = it->getMapped();
-
-                        cell_to_update.state = Cell::on_disk;
-                        cell_to_update.index.block_index += block_index_in_file_before_write;
-                    }
-
-                    /// Memory buffer partition flushed to disk start reusing it
-                    current_memory_buffer_partition.reset();
-                    memset(const_cast<char *>(current_memory_buffer_partition.getData()), 0, current_memory_buffer_partition.getSizeInBytes());
-
-                    write_into_memory_buffer_result = current_memory_buffer_partition.writeKey(ssd_cache_key, cache_index);
-                    assert(write_into_memory_buffer_result);
-
-                    cell.state = Cell::in_memory;
-                    cell.index = cache_index;
-                    cell.in_memory_partition_index = current_partition_index;
-
-                    index[ssd_cache_key.key] = cell;
-                    break;
-                }
-                else
-                {
-                    /// Partition is full need to try next partition
-
-                    if (memory_buffer_partitions.size() < configuration.max_partitions_count)
-                    {
-                        /// Try tro create next partition without reusing old partitions
-                        ++current_partition_index;
-                        file_buffer.allocateSizeForNextPartition();
-                        memory_buffer_partitions.emplace_back(configuration.block_size, configuration.write_buffer_blocks_size);
-                    }
-                    else
-                    {
-                        /// Start reusing old partitions
-                        current_partition_index = (current_partition_index + 1) % memory_buffer_partitions.size();
-                        file_buffer.reset();
-                    }
-                }
+                /// Start reusing old partitions
+                current_partition_index = (current_partition_index + 1) % memory_buffer_partitions.size();
+                file_buffer.reset();
             }
         }
     }

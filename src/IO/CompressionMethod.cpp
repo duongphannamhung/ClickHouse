@@ -70,12 +70,11 @@ CompressionMethod chooseHTTPCompressionMethod(const std::string & list)
         return CompressionMethod::Gzip;
     if (std::string::npos != list.find("deflate"))
         return CompressionMethod::Zlib;
-    else if (std::string::npos != list.find("xz"))
+    if (std::string::npos != list.find("xz"))
         return CompressionMethod::Xz;
-    else if (std::string::npos != list.find("bz2"))
+    if (std::string::npos != list.find("bz2"))
         return CompressionMethod::Bzip2;
-    else
-        return CompressionMethod::None;
+    return CompressionMethod::None;
 }
 
 CompressionMethod chooseCompressionMethod(const std::string & path, const std::string & hint)

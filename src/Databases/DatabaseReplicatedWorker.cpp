@@ -252,7 +252,7 @@ String DatabaseReplicatedDDLWorker::enqueueQueryImpl(const ZooKeeperPtr & zookee
             counter_path = dynamic_cast<const Coordination::CreateResponse &>(*res.back()).path_created;
             break;
         }
-        else if (code != Coordination::Error::ZNODEEXISTS)
+        if (code != Coordination::Error::ZNODEEXISTS)
             zkutil::KeeperMultiException::check(code, ops, res);
 
         sleepForMilliseconds(50);

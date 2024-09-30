@@ -163,7 +163,7 @@ private:
                 (m_data[14] - '0') * 10 + (m_data[15] - '0'),
                 (m_data[17] - '0') * 10 + (m_data[18] - '0'));
         }
-        throwException("Cannot parse DateTime")
+        throwException("Cannot parse DateTime");
     }
 
 

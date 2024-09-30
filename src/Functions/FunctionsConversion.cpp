@@ -720,9 +720,8 @@ bool tryParseImpl(typename DataType::FieldType & x, ReadBuffer & rb, const DateL
         else
             return tryReadFloatTextFast(x, rb);
     }
-
-    /*if constexpr (is_integral_v<typename DataType::FieldType>)*/
-    return tryReadIntText(x, rb);
+    else /*if constexpr (is_integral_v<typename DataType::FieldType>)*/
+        return tryReadIntText(x, rb);
 }
 
 template <>

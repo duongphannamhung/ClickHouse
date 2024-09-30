@@ -69,9 +69,9 @@ static std::pair<String, Int32> tryToExtractSingleColumn(const RPNBuilderTreeNod
         auto subresult = tryToExtractSingleColumn(function_argument);
         if (subresult.second == 0) /// the subnode contains 0 column
             continue;
-        else if (subresult.second > 1) /// the subnode contains more than 1 column
+        if (subresult.second > 1) /// the subnode contains more than 1 column
             return subresult;
-        else if (result.second == 0 || result.first == subresult.first) /// subnodes contain same column.
+        if (result.second == 0 || result.first == subresult.first) /// subnodes contain same column.
             result = subresult;
         else
             return {"", 2};

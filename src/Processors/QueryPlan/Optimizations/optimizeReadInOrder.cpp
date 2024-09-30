@@ -967,7 +967,7 @@ InputOrder buildInputOrderInfo(DistinctStep & distinct, QueryPlan::Node & node)
 
         return order_info;
     }
-    else if (auto * merge = typeid_cast<ReadFromMerge *>(reading_node->step.get()))
+    if (auto * merge = typeid_cast<ReadFromMerge *>(reading_node->step.get()))
     {
         auto order_info = buildInputOrderFromUnorderedKeys(
             merge,

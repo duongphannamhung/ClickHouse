@@ -1173,16 +1173,14 @@ String StorageFileSource::FilesIterator::next()
 {
     if (distributed_processing)
         return getContext()->getReadTaskCallback()();
-    else
-    {
-        const auto & fs = isReadFromArchive() ? archive_info->paths_to_archives : files;
 
-        auto current_index = index.fetch_add(1, std::memory_order_relaxed);
-        if (current_index >= fs.size())
-            return {};
+    const auto & fs = isReadFromArchive() ? archive_info->paths_to_archives : files;
 
-        return fs[current_index];
-    }
+    auto current_index = index.fetch_add(1, std::memory_order_relaxed);
+    if (current_index >= fs.size())
+        return {};
+
+    return fs[current_index];
 }
 
 const String & StorageFileSource::FilesIterator::getFileNameInArchive()

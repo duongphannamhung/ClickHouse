@@ -2116,8 +2116,8 @@ bool KeyCondition::extractAtomFromTree(const RPNBuilderTreeNode & node, RPNEleme
                 /// Case2 has holes in polygon, when checking skip index, the hole will be ignored.
                 return analyze_point_in_polygon();
             }
-            else
-                return false;
+
+            return false;
         }
 
         const auto atom_it = atom_map.find(func_name);

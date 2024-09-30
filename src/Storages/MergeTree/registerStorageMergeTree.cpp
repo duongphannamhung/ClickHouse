@@ -257,7 +257,7 @@ static TableZnodeInfo extractZooKeeperPathAndReplicaNameFromEngineArgs(
 
         return expand_macro(ast_zk_path, ast_replica_name, ast_zk_path->value.safeGet<String>(), ast_replica_name->value.safeGet<String>());
     }
-    else if (is_extended_storage_def
+    if (is_extended_storage_def
         && (arg_cnt == 0
             || !engine_args[arg_num]->as<ASTLiteral>()
             || (arg_cnt == 1 && (getNamePart(engine_name) == "Graphite"))))
@@ -283,8 +283,8 @@ static TableZnodeInfo extractZooKeeperPathAndReplicaNameFromEngineArgs(
 
         return res;
     }
-    else
-        throw Exception(ErrorCodes::BAD_ARGUMENTS, "Expected two string literal arguments: zookeeper_path and replica_name");
+
+    throw Exception(ErrorCodes::BAD_ARGUMENTS, "Expected two string literal arguments: zookeeper_path and replica_name");
 }
 
 /// Extracts a zookeeper path from a specified CREATE TABLE query.

@@ -398,18 +398,16 @@ void DDLWorker::scheduleTasks(bool reinitialized)
             bool maybe_concurrently_deleting = task && !zookeeper->exists(fs::path(task->entry_path) / "active");
             return task && !maybe_concurrently_deleting && !maybe_currently_processing;
         }
-        else if (last_skipped_entry_name.has_value() && !queue_fully_loaded_after_initialization_debug_helper)
+        if (last_skipped_entry_name.has_value() && !queue_fully_loaded_after_initialization_debug_helper)
         {
             /// If connection was lost during queue loading
             /// we may start processing from finished task (because we don't know yet that it's finished) and it's ok.
             return false;
         }
-        else
-        {
-            /// Return true if entry should not be scheduled.
-            bool processed = !task && reason == TASK_PROCESSED_OUT_REASON;
-            return processed || maybe_currently_processing;
-        }
+
+        /// Return true if entry should not be scheduled.
+        bool processed = !task && reason == TASK_PROCESSED_OUT_REASON;
+        return processed || maybe_currently_processing;
     }));
 
     for (auto it = begin_node; it != queue_nodes.end() && !stop_flag; ++it)

@@ -161,7 +161,7 @@ struct ToDateTimeImpl
         {
             if (d < 0)
                 return 0;
-            else if (d > MAX_DATETIME_DAY_NUM)
+            if (d > MAX_DATETIME_DAY_NUM)
                 d = MAX_DATETIME_DAY_NUM;
         }
         else if constexpr (date_time_overflow_behavior == FormatSettings::DateTimeOverflowBehavior::Throw)
@@ -215,8 +215,8 @@ struct ToDateTransform32Or64
         /// otherwise treat it as unix timestamp. This is a bit weird, but we leave this behavior.
         if (from <= DATE_LUT_MAX_DAY_NUM)
             return from;
-        else
-            return time_zone.toDayNum(std::min(time_t(from), time_t(MAX_DATETIME_TIMESTAMP)));
+
+        return time_zone.toDayNum(std::min(time_t(from), time_t(MAX_DATETIME_TIMESTAMP)));
     }
 };
 
@@ -273,18 +273,15 @@ struct ToDate32Transform32Or64
     static NO_SANITIZE_UNDEFINED Int32 execute(const FromType & from, const DateLUTImpl & time_zone)
     {
         if (from < DATE_LUT_MAX_EXTEND_DAY_NUM)
-        {
             return static_cast<Int32>(from);
-        }
-        else
+
+        if constexpr (date_time_overflow_behavior == FormatSettings::DateTimeOverflowBehavior::Throw)
         {
-            if constexpr (date_time_overflow_behavior == FormatSettings::DateTimeOverflowBehavior::Throw)
-            {
-                if (from > MAX_DATETIME64_TIMESTAMP) [[unlikely]]
-                    throw Exception(ErrorCodes::VALUE_IS_OUT_OF_RANGE_OF_DATA_TYPE, "Timestamp value {} is out of bounds of type Date32", from);
-            }
-            return time_zone.toDayNum(std::min(time_t(from), time_t(MAX_DATETIME64_TIMESTAMP)));
+            if (from > MAX_DATETIME64_TIMESTAMP) [[unlikely]]
+                throw Exception(ErrorCodes::VALUE_IS_OUT_OF_RANGE_OF_DATA_TYPE, "Timestamp value {} is out of bounds of type Date32", from);
         }
+
+        return time_zone.toDayNum(std::min(time_t(from), time_t(MAX_DATETIME64_TIMESTAMP)));
     }
 };
 
@@ -723,8 +720,9 @@ bool tryParseImpl(typename DataType::FieldType & x, ReadBuffer & rb, const DateL
         else
             return tryReadFloatTextFast(x, rb);
     }
-    else /*if constexpr (is_integral_v<typename DataType::FieldType>)*/
-        return tryReadIntText(x, rb);
+
+    /*if constexpr (is_integral_v<typename DataType::FieldType>)*/
+    return tryReadIntText(x, rb);
 }
 
 template <>
@@ -1491,9 +1489,9 @@ struct ConvertImpl
                     return ColumnNullable::create(std::move(col_to), std::move(null_map));
                 return col_to;
             }
-            else
-                throw Exception(ErrorCodes::ILLEGAL_COLUMN, "Illegal column {} of first argument of function {}",
-                        arguments[0].column->getName(), Name::name);
+
+            throw Exception(ErrorCodes::ILLEGAL_COLUMN, "Illegal column {} of first argument of function {}",
+                    arguments[0].column->getName(), Name::name);
         }
         else if constexpr (std::is_same_v<ToDataType, DataTypeString>)
         {
@@ -1546,11 +1544,12 @@ struct ConvertImpl
 
                 if (null_map)
                     return ColumnNullable::create(std::move(col_to), std::move(null_map));
+
                 return col_to;
             }
-            else
-                throw Exception(ErrorCodes::ILLEGAL_COLUMN, "Illegal column {} of first argument of function {}",
-                        arguments[0].column->getName(), Name::name);
+
+            throw Exception(ErrorCodes::ILLEGAL_COLUMN, "Illegal column {} of first argument of function {}",
+                    arguments[0].column->getName(), Name::name);
         }
         else if constexpr (std::is_same_v<Name, NameToUnixTimestamp>
             && std::is_same_v<FromDataType, DataTypeString>
@@ -2386,12 +2385,10 @@ private:
         {
             /// Generic conversion of any type to String.
             if (std::is_same_v<ToDataType, DataTypeString>)
-            {
                 return ConvertImplGenericToString<ColumnString>::execute(arguments, result_type, input_rows_count, context);
-            }
-            else
-                throw Exception(ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT, "Illegal type {} of argument of function {}",
-                    arguments[0].type->getName(), getName());
+
+            throw Exception(ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT, "Illegal type {} of argument of function {}",
+                arguments[0].type->getName(), getName());
         }
 
         return result_column;
@@ -2467,9 +2464,9 @@ public:
                     throw Exception(ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT, "Illegal type {} of first argument of function {}. "
                             "Conversion functions with postfix 'OrZero' or 'OrNull' should take String argument",
                             arguments[0].type->getName(), getName());
-                else
-                    throw Exception(ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT, "Illegal type {} of first argument of function {}",
-                            arguments[0].type->getName(), getName());
+
+                throw Exception(ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT, "Illegal type {} of first argument of function {}",
+                        arguments[0].type->getName(), getName());
             }
 
             if (arguments.size() == 2)
@@ -2524,15 +2521,12 @@ public:
         const IDataType * from_type = arguments[0].type.get();
 
         if (checkAndGetDataType<DataTypeString>(from_type))
-        {
             return ConvertThroughParsing<DataTypeString, ConvertToDataType, Name, exception_mode, parsing_mode>::execute(
                 arguments, result_type, input_rows_count, scale);
-        }
-        else if (checkAndGetDataType<DataTypeFixedString>(from_type))
-        {
+
+        if (checkAndGetDataType<DataTypeFixedString>(from_type))
             return ConvertThroughParsing<DataTypeFixedString, ConvertToDataType, Name, exception_mode, parsing_mode>::execute(
                 arguments, result_type, input_rows_count, scale);
-        }
 
         return nullptr;
     }
@@ -2726,13 +2720,11 @@ struct ToNumberMonotonicity
 
             if (to_is_unsigned)
                 return { .is_monotonic = true };
-            else
-            {
-                // If To is signed, it's possible that the signedness is different after conversion. So we check it explicitly.
-                const bool is_monotonic = (T(left.safeGet<UInt64>()) >= 0) == (T(right.safeGet<UInt64>()) >= 0);
 
-                return { .is_monotonic = is_monotonic };
-            }
+            // If To is signed, it's possible that the signedness is different after conversion. So we check it explicitly.
+            const bool is_monotonic = (T(left.safeGet<UInt64>()) >= 0) == (T(right.safeGet<UInt64>()) >= 0);
+
+            return { .is_monotonic = is_monotonic };
         }
 
         UNREACHABLE();
@@ -2748,10 +2740,9 @@ struct ToDateMonotonicity
         auto which = WhichDataType(type);
         if (which.isDateOrDate32() || which.isDateTime() || which.isDateTime64() || which.isInt8() || which.isInt16() || which.isUInt8()
             || which.isUInt16())
-        {
             return {.is_monotonic = true, .is_always_monotonic = true};
-        }
-        else if (
+
+        if (
             ((left.getType() == Field::Types::UInt64 || left.isNull()) && (right.getType() == Field::Types::UInt64 || right.isNull())
              && ((left.isNull() || left.safeGet<UInt64>() < 0xFFFF) && (right.isNull() || right.safeGet<UInt64>() >= 0xFFFF)))
             || ((left.getType() == Field::Types::Int64 || left.isNull()) && (right.getType() == Field::Types::Int64 || right.isNull())
@@ -2761,13 +2752,9 @@ struct ToDateMonotonicity
                 && (right.getType() == Field::Types::Float64 || right.isNull())
                 && ((left.isNull() || left.safeGet<Float64>() < 0xFFFF) && (right.isNull() || right.safeGet<Float64>() >= 0xFFFF))))
             || !isNativeNumber(type))
-        {
             return {};
-        }
-        else
-        {
-            return {.is_monotonic = true, .is_always_monotonic = true};
-        }
+
+        return {.is_monotonic = true, .is_always_monotonic = true};
     }
 };
 
@@ -2779,8 +2766,8 @@ struct ToDateTimeMonotonicity
     {
         if (type.isValueRepresentedByNumber())
             return {.is_monotonic = true, .is_always_monotonic = true};
-        else
-            return {};
+
+        return {};
     }
 };
 
@@ -3244,7 +3231,8 @@ private:
             FunctionPtr function = FunctionConvertFromString<ToDataType, FunctionCastName, ConvertFromStringExceptionMode::Null>::create(context);
             return createFunctionAdaptor(function, from_type);
         }
-        else if (!can_apply_accurate_cast)
+
+        if (!can_apply_accurate_cast)
         {
             FunctionPtr function = FunctionTo<ToDataType>::Type::create(context);
             return createFunctionAdaptor(function, from_type);
@@ -3342,12 +3330,10 @@ private:
                     auto nullable_column_wrapper = FunctionCast::createToNullableColumnWrapper();
                     return nullable_column_wrapper(arguments, result_type, column_nullable, input_rows_count);
                 }
-                else
-                {
-                    throw Exception(ErrorCodes::CANNOT_CONVERT_TYPE,
-                        "Conversion from {} to {} is not supported",
-                        from_type_index, to_type->getName());
-                }
+
+                throw Exception(ErrorCodes::CANNOT_CONVERT_TYPE,
+                    "Conversion from {} to {} is not supported",
+                    from_type_index, to_type->getName());
             }
 
             return result_column;
@@ -3409,8 +3395,8 @@ private:
         {
             if (exception_mode_null)
                 return FunctionToFixedString::executeForN<ConvertToFixedStringExceptionMode::Null>(arguments, N);
-            else
-                return FunctionToFixedString::executeForN<ConvertToFixedStringExceptionMode::Throw>(arguments, N);
+
+            return FunctionToFixedString::executeForN<ConvertToFixedStringExceptionMode::Throw>(arguments, N);
         };
     }
 
@@ -3453,9 +3439,9 @@ private:
         {
             if (cast_type == CastType::accurateOrNull)
                 return createToNullableColumnWrapper();
-            else
-                throw Exception(ErrorCodes::CANNOT_CONVERT_TYPE, "Conversion from {} to {} is not supported",
-                    from_type->getName(), to_type->getName());
+
+            throw Exception(ErrorCodes::CANNOT_CONVERT_TYPE, "Conversion from {} to {} is not supported",
+                from_type->getName(), to_type->getName());
         }
 
         auto wrapper_cast_type = cast_type;
@@ -3481,7 +3467,7 @@ private:
 
                         return true;
                     }
-                    else if (wrapper_cast_type == CastType::accurateOrNull)
+                    if (wrapper_cast_type == CastType::accurateOrNull)
                     {
                         AccurateOrNullConvertStrategyAdditions additions;
                         additions.scale = scale;
@@ -3518,10 +3504,10 @@ private:
                     auto nullable_column_wrapper = FunctionCast::createToNullableColumnWrapper();
                     return nullable_column_wrapper(arguments, result_type, column_nullable, input_rows_count);
                 }
-                else
-                    throw Exception(ErrorCodes::CANNOT_CONVERT_TYPE,
-                        "Conversion from {} to {} is not supported",
-                        type_index, to_type->getName());
+
+                throw Exception(ErrorCodes::CANNOT_CONVERT_TYPE,
+                    "Conversion from {} to {} is not supported",
+                    type_index, to_type->getName());
             }
 
             return result_column;
@@ -3556,22 +3542,20 @@ private:
                         new_col_agg->set(function);
                         return new_col_agg;
                     }
-                    else
-                    {
-                        throw Exception(
-                            ErrorCodes::LOGICAL_ERROR,
-                            "Illegal column {} for function CAST AS AggregateFunction",
-                            argument_column.column->getName());
-                    }
+
+                    throw Exception(
+                        ErrorCodes::LOGICAL_ERROR,
+                        "Illegal column {} for function CAST AS AggregateFunction",
+                        argument_column.column->getName());
                 };
             }
         }
 
         if (cast_type == CastType::accurateOrNull)
             return createToNullableColumnWrapper();
-        else
-            throw Exception(ErrorCodes::CANNOT_CONVERT_TYPE, "Conversion from {} to {} is not supported",
-                from_type_untyped->getName(), to_type->getName());
+
+        throw Exception(ErrorCodes::CANNOT_CONVERT_TYPE, "Conversion from {} to {} is not supported",
+            from_type_untyped->getName(), to_type->getName());
     }
 
     WrapperType createArrayWrapper(const DataTypePtr & from_type_untyped, const DataTypeArray & to_type) const
@@ -3641,12 +3625,10 @@ private:
                 /// set converted nested column to result
                 return ColumnArray::create(result_column, col_array->getOffsetsPtr());
             }
-            else
-            {
-                throw Exception(ErrorCodes::LOGICAL_ERROR,
-                    "Illegal column {} for function CAST AS Array",
-                    argument_column.column->getName());
-            }
+
+            throw Exception(ErrorCodes::LOGICAL_ERROR,
+                "Illegal column {} for function CAST AS Array",
+                argument_column.column->getName());
         };
     }
 
@@ -3860,7 +3842,7 @@ private:
 
             return createTupleToMapWrapper(from_kv_types, to_kv_types);
         }
-        else if (const auto * from_array = typeid_cast<const DataTypeArray *>(from_type_untyped.get()))
+        if (const auto * from_array = typeid_cast<const DataTypeArray *>(from_type_untyped.get()))
         {
             if (typeid_cast<const DataTypeNothing *>(from_array->getNestedType().get()))
                 return [nested = to_type->getNestedType()](ColumnsWithTypeAndName &, const DataTypePtr &, const ColumnNullable *, size_t size)
@@ -3879,15 +3861,14 @@ private:
 
             return createArrayToMapWrapper(nested_tuple->getElements(), to_type->getKeyValueTypes());
         }
-        else if (const auto * from_type = checkAndGetDataType<DataTypeMap>(from_type_untyped.get()))
+
+        if (const auto * from_type = checkAndGetDataType<DataTypeMap>(from_type_untyped.get()))
         {
             return createMapToMapWrapper(from_type->getKeyValueTypes(), to_type->getKeyValueTypes());
         }
-        else
-        {
-            throw Exception(ErrorCodes::TYPE_MISMATCH, "Unsupported types to CAST AS Map. "
-                "Left type: {}, right type: {}", from_type_untyped->getName(), to_type->getName());
-        }
+
+        throw Exception(ErrorCodes::TYPE_MISMATCH, "Unsupported types to CAST AS Map. "
+            "Left type: {}, right type: {}", from_type_untyped->getName(), to_type->getName());
     }
 
     WrapperType createTupleToObjectWrapper(const DataTypeTuple & from_tuple, bool has_nullable_subcolumns) const
@@ -4323,7 +4304,7 @@ private:
                     variant_column = column->filter(filter, variant_size_hint);
                 return createVariantFromDescriptorsAndOneNonEmptyVariant(variant_types, std::move(discriminators), variant_column, variant_discr);
             }
-            else if (isColumnLowCardinalityNullable(*arguments.front().column))
+            if (isColumnLowCardinalityNullable(*arguments.front().column))
             {
                 const auto & column = arguments.front().column;
 
@@ -4364,13 +4345,11 @@ private:
                 assert_cast<ColumnLowCardinality &>(*variant_column).nestedRemoveNullable();
                 return createVariantFromDescriptorsAndOneNonEmptyVariant(variant_types, std::move(discriminators), std::move(variant_column), variant_discr);
             }
-            else
-            {
-                const auto & column = arguments.front().column;
-                auto discriminators = ColumnVariant::ColumnDiscriminators::create();
-                discriminators->getData().resize_fill(column->size(), variant_discr);
-                return createVariantFromDescriptorsAndOneNonEmptyVariant(variant_types, std::move(discriminators), column, variant_discr);
-            }
+
+            const auto & column = arguments.front().column;
+            auto discriminators = ColumnVariant::ColumnDiscriminators::create();
+            discriminators->getData().resize_fill(column->size(), variant_discr);
+            return createVariantFromDescriptorsAndOneNonEmptyVariant(variant_types, std::move(discriminators), column, variant_discr);
         };
     }
 
@@ -4659,21 +4638,19 @@ private:
 
         if (checkAndGetDataType<DataTypeString>(from_type.get()))
             return createStringToEnumWrapper<ColumnString, EnumType>();
-        else if (checkAndGetDataType<DataTypeFixedString>(from_type.get()))
+        if (checkAndGetDataType<DataTypeFixedString>(from_type.get()))
             return createStringToEnumWrapper<ColumnFixedString, EnumType>();
-        else if (isNativeNumber(from_type) || isEnum(from_type))
+        if (isNativeNumber(from_type) || isEnum(from_type))
         {
             auto function = Function::create(context);
             return createFunctionAdaptor(function, from_type);
         }
-        else
-        {
-            if (cast_type == CastType::accurateOrNull)
-                return createToNullableColumnWrapper();
-            else
-                throw Exception(ErrorCodes::CANNOT_CONVERT_TYPE, "Conversion from {} to {} is not supported",
-                    from_type->getName(), to_type->getName());
-        }
+
+        if (cast_type == CastType::accurateOrNull)
+            return createToNullableColumnWrapper();
+
+        throw Exception(ErrorCodes::CANNOT_CONVERT_TYPE, "Conversion from {} to {} is not supported",
+            from_type->getName(), to_type->getName());
     }
 
     template <typename EnumTypeFrom, typename EnumTypeTo>
@@ -4744,9 +4721,9 @@ private:
 
                 return res;
             }
-            else
-                throw Exception(ErrorCodes::LOGICAL_ERROR, "Unexpected column {} as first argument of function {}",
-                    first_col->getName(), function_name);
+
+            throw Exception(ErrorCodes::LOGICAL_ERROR, "Unexpected column {} as first argument of function {}",
+                first_col->getName(), function_name);
         };
     }
 
@@ -4799,9 +4776,9 @@ private:
 
                 return res;
             }
-            else
-                throw Exception(ErrorCodes::LOGICAL_ERROR, "Unexpected column {} as first argument of function {}",
-                    first_col->getName(), function_name);
+
+            throw Exception(ErrorCodes::LOGICAL_ERROR, "Unexpected column {} as first argument of function {}",
+                first_col->getName(), function_name);
         };
     }
 
@@ -4843,13 +4820,9 @@ private:
             if (!to_nested->isNullable() && !isVariant(to_type))
             {
                 if (cast_type == CastType::accurateOrNull)
-                {
                     return createToNullableColumnWrapper();
-                }
-                else
-                {
-                    throw Exception(ErrorCodes::CANNOT_CONVERT_TYPE, "Cannot convert NULL to a non-nullable type");
-                }
+
+                throw Exception(ErrorCodes::CANNOT_CONVERT_TYPE, "Cannot convert NULL to a non-nullable type");
             }
 
             return [](ColumnsWithTypeAndName &, const DataTypePtr & result_type, const ColumnNullable *, size_t input_rows_count)
@@ -4923,10 +4896,10 @@ private:
 
                 return res_column;
             }
-            else if (!src_converted_to_full_column)
+            if (!src_converted_to_full_column)
                 return converted_column->index(*res_indexes, 0);
-            else
-                return converted_column;
+
+            return converted_column;
         };
     }
 
@@ -5028,10 +5001,11 @@ private:
                 if (DataTypeAggregateFunction::strictEquals(from_type, to_type))
                     return createIdentityWrapper(from_type);
             }
-            else
-                return createIdentityWrapper(from_type);
+
+            return createIdentityWrapper(from_type);
         }
-        else if (WhichDataType(from_type).isNothing())
+
+        if (WhichDataType(from_type).isNothing())
             return createNothingWrapper(to_type.get());
 
         WrapperType ret;
@@ -5106,10 +5080,10 @@ private:
                         const auto * null_map = column_nullable ? &column_nullable->getNullMapData() : nullptr;
                         if (requested_result_is_nullable)
                             return convertToIPv4<IPStringToNumExceptionMode::Null>(arguments[0].column, null_map);
-                        else if (cast_ipv4_ipv6_default_on_conversion_error_value || input_format_ipv4_default_on_conversion_error_value)
+                        if (cast_ipv4_ipv6_default_on_conversion_error_value || input_format_ipv4_default_on_conversion_error_value)
                             return convertToIPv4<IPStringToNumExceptionMode::Default>(arguments[0].column, null_map);
-                        else
-                            return convertToIPv4<IPStringToNumExceptionMode::Throw>(arguments[0].column, null_map);
+
+                        return convertToIPv4<IPStringToNumExceptionMode::Throw>(arguments[0].column, null_map);
                     };
 
                     return true;
@@ -5132,10 +5106,10 @@ private:
                         const auto * null_map = column_nullable ? &column_nullable->getNullMapData() : nullptr;
                         if (requested_result_is_nullable)
                             return convertToIPv6<IPStringToNumExceptionMode::Null>(arguments[0].column, null_map);
-                        else if (cast_ipv4_ipv6_default_on_conversion_error_value || input_format_ipv6_default_on_conversion_error_value)
+                        if (cast_ipv4_ipv6_default_on_conversion_error_value || input_format_ipv6_default_on_conversion_error_value)
                             return convertToIPv6<IPStringToNumExceptionMode::Default>(arguments[0].column, null_map);
-                        else
-                            return convertToIPv6<IPStringToNumExceptionMode::Throw>(arguments[0].column, null_map);
+
+                        return convertToIPv6<IPStringToNumExceptionMode::Throw>(arguments[0].column, null_map);
                     };
 
                     return true;
@@ -5174,10 +5148,10 @@ private:
                     const auto * null_map = column_nullable ? &column_nullable->getNullMapData() : nullptr;
                     if (requested_result_is_nullable)
                         return convertIPv6ToIPv4<IPStringToNumExceptionMode::Null>(arguments[0].column, null_map);
-                    else if (cast_ipv4_ipv6_default_on_conversion_error_value)
+                    if (cast_ipv4_ipv6_default_on_conversion_error_value)
                         return convertIPv6ToIPv4<IPStringToNumExceptionMode::Default>(arguments[0].column, null_map);
-                    else
-                        return convertIPv6ToIPv4<IPStringToNumExceptionMode::Throw>(arguments[0].column, null_map);
+
+                    return convertIPv6ToIPv4<IPStringToNumExceptionMode::Throw>(arguments[0].column, null_map);
                 };
 
                 return true;
@@ -5190,7 +5164,7 @@ private:
                     ret = createEnumToStringWrapper<FromDataType>();
                     return true;
                 }
-                else if (from_type->getCustomSerialization())
+                if (from_type->getCustomSerialization())
                 {
                     ret = [this](ColumnsWithTypeAndName & arguments, const DataTypePtr & result_type, const ColumnNullable *, size_t input_rows_count) -> ColumnPtr
                     {
@@ -5235,9 +5209,9 @@ private:
 
         if (cast_type == CastType::accurateOrNull)
             return createToNullableColumnWrapper();
-        else
-            throw Exception(ErrorCodes::CANNOT_CONVERT_TYPE, "Conversion from {} to {} is not supported",
-                from_type->getName(), to_type->getName());
+
+        throw Exception(ErrorCodes::CANNOT_CONVERT_TYPE, "Conversion from {} to {} is not supported",
+            from_type->getName(), to_type->getName());
     }
 };
 
